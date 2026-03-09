@@ -331,7 +331,7 @@
 
   // Visible grid area (in canvas coords)
   const GRID_AREA_TOP    = TOP_BAR_H_VALUE() + GRID_TOP_OFFSET;
-  const GRID_AREA_BOTTOM = BASE_H - GROUND_H_VALUE() - 24;
+  const GRID_AREA_BOTTOM = BASE_H - GROUND_H_VALUE() - 56;
 
   function GROUND_H_VALUE() { return 44; }
 
@@ -453,7 +453,7 @@
       x: 90,
       y: BASE_H / 2,
       vy: 0,
-      r: 13,
+      r: 18,
       dead: false,
       inkTrail: [],
     };
@@ -1211,7 +1211,7 @@
       }
 
       // Ensō ring as border
-      drawEnsoCircle(0, 0, r + 3, player.dead, color);
+      drawEnsoCircle(0, 0, r + 4, player.dead, color);
       ctx.shadowBlur = 0;
 
       // Circular photo crop
@@ -1476,7 +1476,7 @@
     if (selectedEmployee) {
       const emp = selectedEmployee;
       const skillDef = getEmployeeSkills();
-      const hudPhotoR = 16;
+      const hudPhotoR = 15;
       const hudPhotoX = 10 + hudPhotoR;
       const hudPhotoY = TOP_BAR_H + 50 + hudPhotoR - 8;
 
@@ -1785,7 +1785,7 @@
     }
 
     // Name
-    ctx.font = `bold 8px Georgia, serif`;
+    ctx.font = `bold 9px Georgia, serif`;
     ctx.fillStyle = C.cream;
     ctx.textAlign = 'center';
     ctx.globalAlpha = isActive ? 1.0 : 0.88;
@@ -1793,14 +1793,14 @@
     ctx.globalAlpha = 1;
 
     // Role
-    ctx.font = '7px Georgia, serif';
+    ctx.font = '8px Georgia, serif';
     ctx.fillStyle = color;
     ctx.globalAlpha = isActive ? 0.9 : 0.65;
     ctx.fillText(emp.role, x + w / 2, photoY + photoR + 21);
     ctx.globalAlpha = 1;
 
     // Tech
-    ctx.font = '6.5px Georgia, serif';
+    ctx.font = '7px Georgia, serif';
     ctx.fillStyle = C.dim;
     ctx.globalAlpha = isActive ? 0.8 : 0.5;
     ctx.fillText(emp.tech, x + w / 2, photoY + photoR + 32);
@@ -1889,7 +1889,7 @@
     // Role icon + title
     ctx.textAlign = 'left';
     const textY = panelY + 13;
-    ctx.font = 'bold 9px Georgia, serif';
+    ctx.font = 'bold 10px Georgia, serif';
     ctx.fillStyle = emp.color;
     ctx.fillText(`${skillDef.icon} ${skillDef.title}`, panelX + 8, textY);
 
@@ -1905,7 +1905,7 @@
     const skillLabelColors = { agility: '#7df5a0', resilience: '#7db8f5', velocity: '#f5d07d' };
     for (const name of skillNames) {
       const val = skills[name];
-      ctx.font = '6.5px Georgia, serif';
+      ctx.font = '7px Georgia, serif';
       ctx.fillStyle = C.dim;
       ctx.globalAlpha = 0.8;
       ctx.fillText(name.charAt(0).toUpperCase() + name.slice(1), bx, barY);
@@ -1913,7 +1913,7 @@
 
       drawSkillBar(bx, barY + 3, barW, barH, val, 10, skillLabelColors[name] || emp.color);
 
-      ctx.font = '6px monospace';
+      ctx.font = '7px monospace';
       ctx.fillStyle = C.dim;
       ctx.globalAlpha = 0.7;
       ctx.fillText(`${val}/10`, bx + barW + 3, barY + barH + 3);
@@ -1923,7 +1923,7 @@
     }
 
     // Passive description
-    ctx.font = '7px Georgia, serif';
+    ctx.font = '7.5px Georgia, serif';
     ctx.fillStyle = C.mauve;
     ctx.globalAlpha = 0.75;
     ctx.textAlign = 'right';
@@ -1945,22 +1945,22 @@
 
     // Broken ensō / photo — large, in player color, desaturated
     ctx.save();
-    ctx.translate(cx, cy - 88);
+    ctx.translate(cx, cy - 95);
     ctx.shadowColor = getPlayerColor();
     ctx.shadowBlur = 20;
-    drawEnsoCircle(0, 0, 42, true, getPlayerColor());
+    drawEnsoCircle(0, 0, 44, true, getPlayerColor());
     ctx.shadowBlur = 0;
     ctx.restore();
 
     if (selectedEmployee && selectedEmployee.imgLoaded && selectedEmployee.imgEl) {
-      const deathPhotoR = 30;
+      const deathPhotoR = 32;
       ctx.save();
       ctx.globalAlpha = 0.6;
       ctx.filter = 'grayscale(70%) brightness(0.55)';
       ctx.beginPath();
-      ctx.arc(cx, cy - 88, deathPhotoR, 0, Math.PI * 2);
+      ctx.arc(cx, cy - 95, deathPhotoR, 0, Math.PI * 2);
       ctx.clip();
-      ctx.drawImage(selectedEmployee.imgEl, cx - deathPhotoR, cy - 88 - deathPhotoR, deathPhotoR * 2, deathPhotoR * 2);
+      ctx.drawImage(selectedEmployee.imgEl, cx - deathPhotoR, cy - 95 - deathPhotoR, deathPhotoR * 2, deathPhotoR * 2);
       ctx.restore();
 
       ctx.save();
@@ -1968,7 +1968,7 @@
       ctx.lineWidth = 1.5;
       ctx.globalAlpha = 0.4;
       ctx.beginPath();
-      ctx.arc(cx, cy - 88, deathPhotoR, 0, Math.PI * 2);
+      ctx.arc(cx, cy - 95, deathPhotoR, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
@@ -1981,11 +1981,11 @@
     ctx.fillStyle = C.mauve;
     ctx.shadowColor = C.burgundy;
     ctx.shadowBlur = 8;
-    ctx.fillText(retroTitle, cx, cy - 30);
+    ctx.fillText(retroTitle, cx, cy - 38);
     ctx.shadowBlur = 0;
 
     // Error message box
-    const bx = cx - 160, by = cy - 22, bw = 320, bh = 44;
+    const bx = cx - 160, by = cy - 30, bw = 320, bh = 44;
     ctx.fillStyle = 'rgba(139, 34, 82, 0.08)';
     ctx.fillRect(bx, by, bw, bh);
     ctx.strokeStyle = C.burgundy;
@@ -2008,8 +2008,8 @@
     ctx.lineWidth = 0.6;
     ctx.globalAlpha = 0.25;
     ctx.beginPath();
-    ctx.moveTo(cx - 100, cy + 30);
-    ctx.lineTo(cx + 100, cy + 30);
+    ctx.moveTo(cx - 100, cy + 20);
+    ctx.lineTo(cx + 100, cy + 20);
     ctx.stroke();
     ctx.globalAlpha = 1;
 
@@ -2017,7 +2017,7 @@
     if (selectedEmployee) {
       const skillDef = ROLE_SKILLS[selectedEmployee.role];
       if (skillDef) {
-        const skillY = cy + 42;
+        const skillY = cy + 30;
 
         // Role icon + title
         ctx.font = 'bold 9px Georgia, serif';
@@ -2066,9 +2066,9 @@
     // Sprint metrics
     ctx.font = 'bold 12px Georgia, serif';
     ctx.fillStyle = C.soft_white;
-    ctx.fillText(`Sprints Delivered:  ${score}`, cx, cy + 98);
+    ctx.fillText(`Sprints Delivered:  ${score}`, cx, cy + 82);
     ctx.fillStyle = C.gold;
-    ctx.fillText(`Personal Best:      ${hiScore}`, cx, cy + 116);
+    ctx.fillText(`Personal Best:      ${hiScore}`, cx, cy + 98);
 
     // New record
     if (score >= hiScore && score > 0) {
@@ -2076,7 +2076,7 @@
       ctx.fillStyle = C.gold;
       ctx.shadowColor = C.gold;
       ctx.shadowBlur = 8;
-      ctx.fillText('✦ New Personal Best ✦', cx, cy + 134);
+      ctx.fillText('✦ New Personal Best ✦', cx, cy + 114);
       ctx.shadowBlur = 0;
     }
 
@@ -2087,14 +2087,14 @@
     ctx.fillStyle = C.cream;
     ctx.shadowColor = C.mauve;
     ctx.shadowBlur = 8;
-    ctx.fillText('— Return to Stillness —', cx, cy + 158);
+    ctx.fillText('— Return to Stillness —', cx, cy + 138);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 
     ctx.font = '9px Georgia, serif';
     ctx.fillStyle = C.dim;
     ctx.globalAlpha = 0.6;
-    ctx.fillText('press Space or tap to continue', cx, cy + 174);
+    ctx.fillText('press Space or tap to continue', cx, cy + 152);
     ctx.globalAlpha = 1;
 
     ctx.textAlign = 'left';
