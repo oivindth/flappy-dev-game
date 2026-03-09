@@ -65,6 +65,39 @@
     torii_mid:   '#3d1a2b',
   };
 
+  // ─── Employee Data ──────────────────────────────────────────────────────────
+  const EMPLOYEES = [
+    { name: 'Anatoliy',  role: 'Senior Dev',       tech: 'C# · React',          color: '#4EC9B0' },
+    { name: 'Bent',      role: 'DevOps',            tech: 'C# · Azure',          color: '#569CD6' },
+    { name: 'Christian', role: 'Senior Dev',        tech: 'Go · React',          color: '#00ADD8' },
+    { name: 'Eivind',    role: 'Senior Dev',        tech: 'Rust · Python',       color: '#DEA584' },
+    { name: 'Erlend',    role: 'Architect',         tech: 'C# · DevOps',         color: '#68217A' },
+    { name: 'Espen',     role: 'Developer',         tech: 'C# · Azure',          color: '#0078D4' },
+    { name: 'Evgeny',    role: 'Cloud Architect',   tech: 'Azure MVP',           color: '#00BCF2' },
+    { name: 'Frederik',  role: 'Fullstack Dev',     tech: 'FP · Design',         color: '#E8A0B0' },
+    { name: 'Gareth',    role: 'Senior Dev',        tech: 'C# · Security',       color: '#C586C0' },
+    { name: 'Ingrid',    role: 'Senior Dev',        tech: 'Python · React',      color: '#3776AB' },
+    { name: 'Louise',    role: 'Senior Dev',        tech: 'C# · .NET',           color: '#512BD4' },
+    { name: 'Magnus T.', role: 'Senior Dev',        tech: 'C# · React',          color: '#61DAFB' },
+    { name: 'Magnus W.', role: 'Developer',         tech: 'Java · Go',           color: '#B07219' },
+    { name: 'Misha',     role: 'Senior Dev',        tech: '.NET · DevSecOps',    color: '#E44D26' },
+    { name: 'Nicolai',   role: 'Senior Dev',        tech: 'C# · React',          color: '#764ABC' },
+    { name: 'Oddbjørn',  role: 'Senior Dev',        tech: 'C# · Mobile',         color: '#3DDC84' },
+    { name: 'Snorre',    role: 'CTO/Architect',     tech: 'C# · React',          color: '#F7DF1E' },
+    { name: 'Steinar',   role: 'Cloud Architect',   tech: 'C# · F# · Azure',    color: '#378BBA' },
+    { name: 'Steve',     role: 'Senior Dev',        tech: 'Java · Angular',      color: '#DD0031' },
+    { name: 'Thomas',    role: 'Senior Dev',        tech: '.NET · Angular',      color: '#1572B6' },
+    { name: 'Torbjørn',  role: 'AI Consultant',     tech: 'AI · Fullstack',      color: '#FF6F00' },
+    { name: 'Torstein',  role: 'Tech Lead',         tech: '.NET · Go · Azure',   color: '#00ACD7' },
+    { name: 'Trude',     role: 'Frontend Dev',      tech: 'A11y · React',        color: '#F06292' },
+    { name: 'Øivind',    role: 'Senior Dev',        tech: 'C# · React · Azure',  color: '#FF9800' },
+    { name: 'Johannes',  role: 'Architect',         tech: 'Enterprise Arch',     color: '#607D8B' },
+    { name: 'Arlene',    role: 'Senior Advisor',    tech: 'Project Mgmt',        color: '#9C27B0' },
+    { name: 'Håvard',    role: 'CEO',               tech: 'Business · BI',       color: '#D4A843' },
+    { name: 'Inge',      role: 'Senior Consultant', tech: 'Agile · Scrum',       color: '#4CAF50' },
+    { name: 'Mia',       role: 'COO',               tech: 'Sales · HR',          color: '#E91E63' },
+  ];
+
   // ─── Audio ──────────────────────────────────────────────────────────────────
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let ac = null;
@@ -111,9 +144,83 @@
     playTone(146, 'triangle', 1.0, 0.1, 0.25);
   }
 
+  // Soft selection chime
+  function sfxSelect() {
+    initAudio();
+    playTone(660, 'sine', 0.15, 0.1);
+    playTone(880, 'sine', 0.15, 0.08, 0.08);
+  }
+
   // ─── State Machine ──────────────────────────────────────────────────────────
-  const STATE = { MENU: 'menu', PLAYING: 'playing', DEAD: 'dead' };
+  const STATE = { MENU: 'menu', SELECT: 'select', PLAYING: 'playing', DEAD: 'dead' };
   let state = STATE.MENU;
+
+  // ─── Selected Character ──────────────────────────────────────────────────────
+  let selectedEmployee = null;
+
+  function getPlayerColor() {
+    return selectedEmployee ? selectedEmployee.color : C.burgundy;
+  }
+
+  function getPlayerColorDim() {
+    return selectedEmployee ? selectedEmployee.color + '88' : C.burgundyDim;
+  }
+
+  function getHiScore() {
+    const key = selectedEmployee
+      ? `enso_flow_hi_${selectedEmployee.name}`
+      : 'enso_flow_hi';
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  }
+
+  function setHiScore(v) {
+    const key = selectedEmployee
+      ? `enso_flow_hi_${selectedEmployee.name}`
+      : 'enso_flow_hi';
+    localStorage.setItem(key, String(v));
+  }
+
+  // ─── Character Select State ──────────────────────────────────────────────────
+  const CARD_W      = 100;
+  const CARD_H      = 90;
+  const CARD_COLS   = 4;
+  const CARD_GAP_X  = 10;
+  const CARD_GAP_Y  = 10;
+  const SELECT_TOP  = TOP_BAR_H_VALUE();  // computed below after constants
+
+  function TOP_BAR_H_VALUE() { return 32; }
+
+  const GRID_LEFT = (BASE_W - (CARD_COLS * CARD_W + (CARD_COLS - 1) * CARD_GAP_X)) / 2;
+  const GRID_TOP_OFFSET = 60; // offset from top bar for the grid start
+
+  let selectScrollY   = 0;   // current scroll in pixels
+  let selectHoverIdx  = -1;  // hovered card index
+  let selectFocusIdx  = 0;   // keyboard focused card index
+  let selectMouseX    = -1;
+  let selectMouseY    = -1;
+
+  // Total rows
+  function totalRows() { return Math.ceil(EMPLOYEES.length / CARD_COLS); }
+
+  // Visible grid area (in canvas coords)
+  const GRID_AREA_TOP    = TOP_BAR_H_VALUE() + GRID_TOP_OFFSET;
+  const GRID_AREA_BOTTOM = BASE_H - GROUND_H_VALUE() - 24;
+
+  function GROUND_H_VALUE() { return 44; }
+
+  function maxScrollY() {
+    const totalH = totalRows() * (CARD_H + CARD_GAP_Y) - CARD_GAP_Y;
+    const visibleH = GRID_AREA_BOTTOM - GRID_AREA_TOP;
+    return Math.max(0, totalH - visibleH);
+  }
+
+  function cardRect(idx) {
+    const col = idx % CARD_COLS;
+    const row = Math.floor(idx / CARD_COLS);
+    const x = GRID_LEFT + col * (CARD_W + CARD_GAP_X);
+    const y = GRID_AREA_TOP + row * (CARD_H + CARD_GAP_Y) - selectScrollY;
+    return { x, y, w: CARD_W, h: CARD_H };
+  }
 
   // ─── Constants ──────────────────────────────────────────────────────────────
   const GRAVITY       = 1400;
@@ -173,13 +280,6 @@
   let bobPhase;
   let deadErrorMsg;
   let goldShimmer, goldShimmerTimer;
-
-  function getHiScore() {
-    return parseInt(localStorage.getItem('enso_flow_hi') || '0', 10);
-  }
-  function setHiScore(v) {
-    localStorage.setItem('enso_flow_hi', String(v));
-  }
 
   // ─── Background init ─────────────────────────────────────────────────────────
   function initBg() {
@@ -254,14 +354,24 @@
   function handleInput() {
     if (state === STATE.MENU) {
       initAudio();
-      state = STATE.PLAYING;
-      resetGame();
-      flap();
+      state = STATE.SELECT;
+      selectScrollY = 0;
+      selectFocusIdx = 0;
+      selectHoverIdx = -1;
     } else if (state === STATE.PLAYING) {
       flap();
     } else if (state === STATE.DEAD) {
       state = STATE.MENU;
     }
+  }
+
+  function confirmCharacterSelect(idx) {
+    if (idx < 0 || idx >= EMPLOYEES.length) return;
+    selectedEmployee = EMPLOYEES[idx];
+    sfxSelect();
+    state = STATE.PLAYING;
+    resetGame();
+    flap();
   }
 
   function flap() {
@@ -272,13 +382,143 @@
   }
 
   document.addEventListener('keydown', e => {
+    if (state === STATE.SELECT) {
+      handleSelectKey(e);
+      return;
+    }
     if (e.code === 'Space' || e.code === 'Enter') {
       e.preventDefault();
       handleInput();
     }
   });
-  canvas.addEventListener('click', handleInput);
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); handleInput(); }, { passive: false });
+
+  function handleSelectKey(e) {
+    e.preventDefault();
+    const cols = CARD_COLS;
+    if (e.code === 'ArrowRight') {
+      selectFocusIdx = Math.min(EMPLOYEES.length - 1, selectFocusIdx + 1);
+      scrollToCard(selectFocusIdx);
+    } else if (e.code === 'ArrowLeft') {
+      selectFocusIdx = Math.max(0, selectFocusIdx - 1);
+      scrollToCard(selectFocusIdx);
+    } else if (e.code === 'ArrowDown') {
+      selectFocusIdx = Math.min(EMPLOYEES.length - 1, selectFocusIdx + cols);
+      scrollToCard(selectFocusIdx);
+    } else if (e.code === 'ArrowUp') {
+      selectFocusIdx = Math.max(0, selectFocusIdx - cols);
+      scrollToCard(selectFocusIdx);
+    } else if (e.code === 'Enter' || e.code === 'Space') {
+      confirmCharacterSelect(selectFocusIdx);
+    } else if (e.code === 'Escape') {
+      state = STATE.MENU;
+    }
+  }
+
+  function scrollToCard(idx) {
+    // Compute the card's y position in the unscrolled grid coordinate space
+    const col = idx % CARD_COLS;
+    const row = Math.floor(idx / CARD_COLS);
+    const rawCardTop = GRID_AREA_TOP + row * (CARD_H + CARD_GAP_Y);
+    const rawCardBot = rawCardTop + CARD_H;
+    const visTop = GRID_AREA_TOP;
+    const visBot = GRID_AREA_BOTTOM;
+    if (rawCardBot - selectScrollY > visBot) {
+      selectScrollY = Math.min(maxScrollY(), rawCardBot - visBot + CARD_GAP_Y);
+    }
+    if (rawCardTop - selectScrollY < visTop) {
+      selectScrollY = Math.max(0, rawCardTop - visTop);
+    }
+  }
+
+  canvas.addEventListener('click', e => {
+    if (state === STATE.SELECT) {
+      const cx = e.offsetX / scale;
+      const cy = e.offsetY / scale;
+      const idx = cardAtPoint(cx, cy);
+      if (idx >= 0) {
+        selectFocusIdx = idx;
+        confirmCharacterSelect(idx);
+      }
+    } else {
+      handleInput();
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    selectMouseX = e.offsetX / scale;
+    selectMouseY = e.offsetY / scale;
+    if (state === STATE.SELECT) {
+      selectHoverIdx = cardAtPoint(selectMouseX, selectMouseY);
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    selectHoverIdx = -1;
+    selectMouseX = -1;
+    selectMouseY = -1;
+  });
+
+  canvas.addEventListener('wheel', e => {
+    if (state === STATE.SELECT) {
+      e.preventDefault();
+      selectScrollY = Math.max(0, Math.min(maxScrollY(), selectScrollY + e.deltaY * 0.5));
+    }
+  }, { passive: false });
+
+  // Touch support for select screen
+  let touchStartY = null;
+  let touchScrollStart = null;
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (state === STATE.SELECT) {
+      touchStartY = e.touches[0].clientY;
+      touchScrollStart = selectScrollY;
+    } else {
+      handleInput();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (state === STATE.SELECT && touchStartY !== null) {
+      e.preventDefault();
+      const dy = (touchStartY - e.touches[0].clientY) / scale;
+      selectScrollY = Math.max(0, Math.min(maxScrollY(), touchScrollStart + dy));
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    if (state === STATE.SELECT) {
+      e.preventDefault();
+      // Only register as a tap if there was minimal scroll movement
+      const dy = touchStartY !== null
+        ? Math.abs(touchStartY - (e.changedTouches[0] ? e.changedTouches[0].clientY : touchStartY))
+        : 999;
+      if (dy < 8) {
+        const touch = e.changedTouches[0];
+        const rect  = canvas.getBoundingClientRect();
+        const cx    = (touch.clientX - rect.left) / scale;
+        const cy    = (touch.clientY - rect.top)  / scale;
+        const idx   = cardAtPoint(cx, cy);
+        if (idx >= 0) {
+          selectFocusIdx = idx;
+          confirmCharacterSelect(idx);
+        }
+      }
+      touchStartY = null;
+      touchScrollStart = null;
+    }
+  }, { passive: false });
+
+  function cardAtPoint(px, py) {
+    for (let i = 0; i < EMPLOYEES.length; i++) {
+      const r = cardRect(i);
+      if (r.y > GRID_AREA_BOTTOM || r.y + r.h < GRID_AREA_TOP) continue; // clipped
+      if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+        return i;
+      }
+    }
+    return -1;
+  }
 
   // ─── Pipe Spawning ──────────────────────────────────────────────────────────
   function spawnPipe() {
@@ -298,6 +538,7 @@
 
   // ─── Ink Splatter Trail ──────────────────────────────────────────────────────
   function spawnInkSplatter() {
+    const col = getPlayerColor();
     for (let i = 0; i < 5; i++) {
       const angle = Math.PI + (Math.random() - 0.5) * 1.2;
       const speed = 40 + Math.random() * 80;
@@ -310,7 +551,7 @@
         decay: 1.2 + Math.random() * 0.8,
         r:     1.5 + Math.random() * 2.5,
         type:  'ink',
-        color: Math.random() < 0.7 ? C.burgundy : C.mauve,
+        color: Math.random() < 0.7 ? col : C.mauve,
       });
     }
   }
@@ -326,7 +567,7 @@
         decay: 1.8 + Math.random() * 1.0,
         r:     1 + Math.random() * 1.5,
         type:  'ink',
-        color: C.burgundy,
+        color: getPlayerColor(),
       });
     }
   }
@@ -352,6 +593,7 @@
 
   // ─── Death Explosion ─────────────────────────────────────────────────────────
   function spawnExplosion(x, y) {
+    const col = getPlayerColor();
     for (let i = 0; i < 24; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 60 + Math.random() * 180;
@@ -363,7 +605,7 @@
         decay: 0.7 + Math.random() * 0.8,
         r:     2 + Math.random() * 3,
         type:  'burst',
-        color: [C.burgundy, C.mauve, C.cream, C.gold][Math.floor(Math.random() * 4)],
+        color: [col, C.mauve, C.cream, C.gold][Math.floor(Math.random() * 4)],
       });
     }
   }
@@ -559,7 +801,7 @@
     drawZenChars();
     drawSakuraPetals();
 
-    if (state !== STATE.MENU) {
+    if (state === STATE.PLAYING || state === STATE.DEAD) {
       drawPipes();
       drawTrail();
       drawPlayer();
@@ -572,8 +814,9 @@
 
     if (flashTimer > 0) drawFlash();
 
-    if (state === STATE.MENU) drawMenu();
-    if (state === STATE.DEAD) drawDead();
+    if (state === STATE.MENU)   drawMenu();
+    if (state === STATE.SELECT) drawCharacterSelect();
+    if (state === STATE.DEAD)   drawDead();
 
     ctx.restore();
   }
@@ -790,18 +1033,20 @@
 
     // Outer glow
     if (!player.dead) {
-      ctx.shadowColor = C.burgundy;
+      ctx.shadowColor = getPlayerColor();
       ctx.shadowBlur = 18;
     }
 
     // Draw ensō — brushstroke arc that doesn't quite close
-    drawEnsoCircle(0, 0, r, player.dead);
+    drawEnsoCircle(0, 0, r, player.dead, getPlayerColor());
 
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  function drawEnsoCircle(cx, cy, r, broken) {
+  function drawEnsoCircle(cx, cy, r, broken, color) {
+    const strokeColor = color || C.burgundy;
+
     // The ensō: a brushstroke circle, thick and slightly uneven
     const gapStart = broken ? -0.1 : 0.18;   // gap where brush lifts
     const gapEnd   = broken ? 2.8  : 0.42;
@@ -816,16 +1061,17 @@
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // Main stroke — burgundy brushstroke
+    // Main stroke — personal color brushstroke
     ctx.beginPath();
     ctx.arc(cx, cy, r, startAngle, endAngle);
 
     // Gradient along the stroke — lighter at ends, darker in middle
     const grad = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
-    grad.addColorStop(0,   '#a02868');
-    grad.addColorStop(0.3, '#C4305A');
-    grad.addColorStop(0.6, '#8B2252');
-    grad.addColorStop(1,   '#6b1840');
+    // Lighten and darken the color for gradient
+    grad.addColorStop(0,   lightenColor(strokeColor, 30));
+    grad.addColorStop(0.3, lightenColor(strokeColor, 10));
+    grad.addColorStop(0.6, strokeColor);
+    grad.addColorStop(1,   darkenColor(strokeColor, 20));
     ctx.strokeStyle = grad;
     ctx.lineWidth = broken ? 4 : 5;
     ctx.stroke();
@@ -844,7 +1090,7 @@
       const sy = cy + Math.sin(startAngle) * r;
       ctx.beginPath();
       ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#a02868';
+      ctx.fillStyle = lightenColor(strokeColor, 20);
       ctx.fill();
 
       // End tip
@@ -852,7 +1098,7 @@
       const ey = cy + Math.sin(endAngle) * r;
       ctx.beginPath();
       ctx.arc(ex, ey, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#8B2252';
+      ctx.fillStyle = strokeColor;
       ctx.fill();
     }
 
@@ -863,6 +1109,28 @@
       ctx.fillStyle = 'rgba(10, 10, 15, 0.0)';
       ctx.fill();
     }
+  }
+
+  // Color utilities for gradient variation
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return [r, g, b];
+  }
+
+  function lightenColor(hex, amount) {
+    try {
+      const [r, g, b] = hexToRgb(hex);
+      return `rgb(${Math.min(255,r+amount)},${Math.min(255,g+amount)},${Math.min(255,b+amount)})`;
+    } catch(e) { return hex; }
+  }
+
+  function darkenColor(hex, amount) {
+    try {
+      const [r, g, b] = hexToRgb(hex);
+      return `rgb(${Math.max(0,r-amount)},${Math.max(0,g-amount)},${Math.max(0,b-amount)})`;
+    } catch(e) { return hex; }
   }
 
   // ─── Ink Trail ───────────────────────────────────────────────────────────────
@@ -995,12 +1263,12 @@
 
   // ─── HUD ──────────────────────────────────────────────────────────────────────
   function drawHUD() {
-    if (state === STATE.MENU) return;
+    if (state === STATE.MENU || state === STATE.SELECT) return;
 
     // Score
     ctx.font = 'bold 16px Georgia, serif';
     ctx.fillStyle = C.cream;
-    ctx.shadowColor = C.burgundy;
+    ctx.shadowColor = getPlayerColor();
     ctx.shadowBlur = goldShimmerTimer > 0 ? 14 : 5;
     ctx.fillText(`Sprints: ${score}`, 10, TOP_BAR_H + 22);
     ctx.shadowBlur = 0;
@@ -1009,6 +1277,15 @@
     ctx.font = '10px Georgia, serif';
     ctx.fillStyle = C.dim;
     ctx.fillText(`Best: ${hiScore}`, 10, TOP_BAR_H + 36);
+
+    // Consultant name
+    if (selectedEmployee) {
+      ctx.font = '9px Georgia, serif';
+      ctx.fillStyle = selectedEmployee.color;
+      ctx.globalAlpha = 0.75;
+      ctx.fillText(`Consultant: ${selectedEmployee.name}`, 10, TOP_BAR_H + 50);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // ─── Flash Message ────────────────────────────────────────────────────────────
@@ -1047,7 +1324,7 @@
     // Outer glow ring
     ctx.shadowColor = C.burgundy;
     ctx.shadowBlur = 30;
-    drawEnsoCircle(0, 0, menuR, false);
+    drawEnsoCircle(0, 0, menuR, false, C.burgundy);
     ctx.shadowBlur = 0;
 
     // Inner 円 character
@@ -1107,7 +1384,7 @@
     ctx.fillStyle = C.cream;
     ctx.shadowColor = C.mauve;
     ctx.shadowBlur = 10;
-    ctx.fillText('— Begin your journey —', cx, cy + 108);
+    ctx.fillText('— Choose your consultant —', cx, cy + 108);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 
@@ -1125,6 +1402,172 @@
     ctx.textBaseline = 'alphabetic';
   }
 
+  // ─── Character Select Screen ─────────────────────────────────────────────────
+  function drawCharacterSelect() {
+    // Dim overlay over the background
+    ctx.fillStyle = 'rgba(7, 5, 10, 0.82)';
+    ctx.fillRect(0, TOP_BAR_H, BASE_W, BASE_H - TOP_BAR_H - GROUND_H);
+
+    const cx = BASE_W / 2;
+
+    ctx.textAlign = 'center';
+
+    // Header
+    ctx.font = 'bold 15px Georgia, serif';
+    ctx.fillStyle = C.cream;
+    ctx.shadowColor = C.burgundy;
+    ctx.shadowBlur = 10;
+    ctx.fillText('Choose Your Consultant', cx, TOP_BAR_H + 22);
+    ctx.shadowBlur = 0;
+
+    // Subtitle
+    ctx.font = '9px Georgia, serif';
+    ctx.fillStyle = C.dim;
+    ctx.globalAlpha = 0.7;
+    ctx.fillText('Arrow keys · Scroll · Tap to select', cx, TOP_BAR_H + 36);
+    ctx.globalAlpha = 1;
+
+    // Clip grid to visible area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, GRID_AREA_TOP, BASE_W, GRID_AREA_BOTTOM - GRID_AREA_TOP);
+    ctx.clip();
+
+    for (let i = 0; i < EMPLOYEES.length; i++) {
+      const emp = EMPLOYEES[i];
+      const rect = cardRect(i);
+
+      // Skip cards fully outside visible region
+      if (rect.y + rect.h < GRID_AREA_TOP || rect.y > GRID_AREA_BOTTOM) continue;
+
+      const isHovered  = i === selectHoverIdx;
+      const isFocused  = i === selectFocusIdx;
+      const isActive   = isHovered || isFocused;
+
+      drawEmployeeCard(emp, rect.x, rect.y, rect.w, rect.h, isActive, isFocused);
+    }
+
+    ctx.restore();
+
+    // Scroll indicators
+    drawScrollIndicators();
+
+    ctx.textAlign = 'left';
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function drawEmployeeCard(emp, x, y, w, h, isActive, isFocused) {
+    const color = emp.color;
+
+    // Card background
+    const bgAlpha = isActive ? 0.22 : 0.10;
+    ctx.fillStyle = `rgba(20,14,22,${bgAlpha})`;
+    roundRect(x, y, w, h, 6);
+    ctx.fill();
+
+    // Border glow
+    const borderAlpha = isFocused ? 0.95 : (isActive ? 0.7 : 0.22);
+    const borderWidth = isFocused ? 1.5 : (isActive ? 1.2 : 0.7);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = borderWidth;
+    ctx.globalAlpha = borderAlpha;
+    roundRect(x, y, w, h, 6);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Outer glow for active cards
+    if (isActive) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = isFocused ? 14 : 8;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = borderWidth;
+      ctx.globalAlpha = 0.3;
+      roundRect(x, y, w, h, 6);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
+    // Mini ensō circle
+    const ensoR = 12;
+    const ensoX = x + w / 2;
+    const ensoY = y + 20;
+
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isActive ? 10 : 5;
+    drawEnsoCircle(ensoX, ensoY, ensoR, false, color);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // Name
+    ctx.font = `bold 8px Georgia, serif`;
+    ctx.fillStyle = C.cream;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = isActive ? 1.0 : 0.88;
+    ctx.fillText(emp.name, x + w / 2, ensoY + ensoR + 12);
+    ctx.globalAlpha = 1;
+
+    // Role
+    ctx.font = '7px Georgia, serif';
+    ctx.fillStyle = color;
+    ctx.globalAlpha = isActive ? 0.9 : 0.65;
+    ctx.fillText(emp.role, x + w / 2, ensoY + ensoR + 23);
+    ctx.globalAlpha = 1;
+
+    // Tech
+    ctx.font = '6.5px Georgia, serif';
+    ctx.fillStyle = C.dim;
+    ctx.globalAlpha = isActive ? 0.8 : 0.5;
+    ctx.fillText(emp.tech, x + w / 2, ensoY + ensoR + 34);
+    ctx.globalAlpha = 1;
+
+    ctx.textAlign = 'left';
+  }
+
+  function drawScrollIndicators() {
+    const cx = BASE_W / 2;
+    const canScrollUp   = selectScrollY > 0;
+    const canScrollDown = selectScrollY < maxScrollY();
+
+    if (canScrollUp) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = '10px Georgia, serif';
+      ctx.fillStyle = C.mauve;
+      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 400);
+      ctx.globalAlpha = 0.4 + 0.4 * pulse;
+      ctx.fillText('▲', cx, GRID_AREA_TOP + 10);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    if (canScrollDown) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = '10px Georgia, serif';
+      ctx.fillStyle = C.mauve;
+      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 400);
+      ctx.globalAlpha = 0.4 + 0.4 * pulse;
+      ctx.fillText('▼', cx, GRID_AREA_BOTTOM + 14);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
   // ─── Death Screen ─────────────────────────────────────────────────────────────
   function drawDead() {
     // Dark overlay with slight burgundy tint
@@ -1136,21 +1579,24 @@
 
     ctx.textAlign = 'center';
 
-    // Broken ensō — large, incomplete
+    // Broken ensō — large, incomplete, in player color
     ctx.save();
     ctx.translate(cx, cy - 88);
-    ctx.shadowColor = C.burgundy;
+    ctx.shadowColor = getPlayerColor();
     ctx.shadowBlur = 20;
-    drawEnsoCircle(0, 0, 42, true);
+    drawEnsoCircle(0, 0, 42, true, getPlayerColor());
     ctx.shadowBlur = 0;
     ctx.restore();
 
-    // "Sprint Retrospective" header
+    // "Sprint Retrospective" header — personalised if character selected
+    const retroTitle = selectedEmployee
+      ? `${selectedEmployee.name}'s Sprint Retrospective`
+      : 'Sprint Retrospective';
     ctx.font = 'bold 13px Georgia, serif';
     ctx.fillStyle = C.mauve;
     ctx.shadowColor = C.burgundy;
     ctx.shadowBlur = 8;
-    ctx.fillText('Sprint Retrospective', cx, cy - 30);
+    ctx.fillText(retroTitle, cx, cy - 30);
     ctx.shadowBlur = 0;
 
     // Error message box
