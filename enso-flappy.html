@@ -98,6 +98,119 @@
     { name: 'Mia',       role: 'COO',               tech: 'Sales · HR',          color: '#E91E63', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/68245e9a0746ecb86e5b1a9e_Mia%202.avif' },
   ];
 
+  // ─── Role-Based Skill System ─────────────────────────────────────────────────
+  const ROLE_SKILLS = {
+    'Senior Dev': {
+      title: 'Senior Developer',
+      icon: '⚡',
+      skills: { agility: 8, resilience: 7, velocity: 6 },
+      mods: { gravityMul: 0.92, flapMul: 1.0, speedMul: 1.0, gapBonus: 0, shieldChance: 0 },
+      passive: 'Code Sense — slightly floatier movement',
+    },
+    'Developer': {
+      title: 'Developer',
+      icon: '💻',
+      skills: { agility: 6, resilience: 6, velocity: 7 },
+      mods: { gravityMul: 1.0, flapMul: 1.0, speedMul: 0.9, gapBonus: 0, shieldChance: 0 },
+      passive: 'Quick Learner — slower difficulty ramp',
+    },
+    'DevOps': {
+      title: 'DevOps Engineer',
+      icon: '🔧',
+      skills: { agility: 5, resilience: 9, velocity: 5 },
+      mods: { gravityMul: 1.0, flapMul: 1.0, speedMul: 1.0, gapBonus: 12, shieldChance: 0 },
+      passive: 'Pipeline Armor — wider gaps between obstacles',
+    },
+    'Architect': {
+      title: 'Architect',
+      icon: '🏗',
+      skills: { agility: 6, resilience: 8, velocity: 5 },
+      mods: { gravityMul: 1.0, flapMul: 1.0, speedMul: 0.95, gapBonus: 10, shieldChance: 0 },
+      passive: 'Blueprint Vision — sees wider paths',
+    },
+    'Cloud Architect': {
+      title: 'Cloud Architect',
+      icon: '☁️',
+      skills: { agility: 7, resilience: 7, velocity: 7 },
+      mods: { gravityMul: 0.85, flapMul: 0.95, speedMul: 1.0, gapBonus: 5, shieldChance: 0 },
+      passive: 'Cloud Native — floats through the air',
+    },
+    'CTO/Architect': {
+      title: 'CTO / Architect',
+      icon: '👑',
+      skills: { agility: 7, resilience: 8, velocity: 6 },
+      mods: { gravityMul: 0.93, flapMul: 1.0, speedMul: 0.95, gapBonus: 8, shieldChance: 0 },
+      passive: 'Tech Vision — lighter and sees wider paths',
+    },
+    'Tech Lead': {
+      title: 'Tech Lead',
+      icon: '🎯',
+      skills: { agility: 7, resilience: 7, velocity: 7 },
+      mods: { gravityMul: 0.95, flapMul: 1.0, speedMul: 1.0, gapBonus: 5, shieldChance: 0 },
+      passive: 'Lead by Example — balanced with wider vision',
+    },
+    'Fullstack Dev': {
+      title: 'Fullstack Developer',
+      icon: '🔄',
+      skills: { agility: 7, resilience: 6, velocity: 8 },
+      mods: { gravityMul: 1.0, flapMul: 1.08, speedMul: 1.05, gapBonus: 0, shieldChance: 0 },
+      passive: 'Full Stack — stronger flap, faster pace',
+    },
+    'Frontend Dev': {
+      title: 'Frontend Developer',
+      icon: '🎨',
+      skills: { agility: 9, resilience: 5, velocity: 6 },
+      mods: { gravityMul: 0.88, flapMul: 0.95, speedMul: 1.0, gapBonus: 0, shieldChance: 0 },
+      passive: 'Pixel Perfect — extremely agile movement',
+    },
+    'AI Consultant': {
+      title: 'AI Consultant',
+      icon: '🤖',
+      skills: { agility: 6, resilience: 6, velocity: 6 },
+      mods: { gravityMul: 0.95, flapMul: 1.0, speedMul: 1.0, gapBonus: 3, shieldChance: 0.05 },
+      passive: 'Neural Dodge — 5% chance to phase through obstacles',
+    },
+    'CEO': {
+      title: 'CEO',
+      icon: '👔',
+      skills: { agility: 5, resilience: 6, velocity: 5 },
+      mods: { gravityMul: 1.08, flapMul: 1.05, speedMul: 0.9, gapBonus: 18, shieldChance: 0 },
+      passive: 'Executive Privilege — obstacles part for you',
+    },
+    'COO': {
+      title: 'COO',
+      icon: '📊',
+      skills: { agility: 5, resilience: 8, velocity: 5 },
+      mods: { gravityMul: 1.0, flapMul: 1.0, speedMul: 0.88, gapBonus: 15, shieldChance: 0 },
+      passive: 'Operational Excellence — slower pace, wider paths',
+    },
+    'Senior Advisor': {
+      title: 'Senior Advisor',
+      icon: '📋',
+      skills: { agility: 5, resilience: 9, velocity: 4 },
+      mods: { gravityMul: 1.0, flapMul: 1.0, speedMul: 0.85, gapBonus: 16, shieldChance: 0 },
+      passive: 'Strategic Planning — widest paths, measured pace',
+    },
+    'Senior Consultant': {
+      title: 'Senior Consultant',
+      icon: '💼',
+      skills: { agility: 6, resilience: 7, velocity: 6 },
+      mods: { gravityMul: 0.95, flapMul: 1.0, speedMul: 0.95, gapBonus: 8, shieldChance: 0 },
+      passive: 'Client Whisperer — balanced approach',
+    },
+  };
+
+  function getEmployeeSkills() {
+    if (!selectedEmployee) return null;
+    return ROLE_SKILLS[selectedEmployee.role] || null;
+  }
+
+  function getMods() {
+    const skills = getEmployeeSkills();
+    if (!skills) return { gravityMul: 1.0, flapMul: 1.0, speedMul: 1.0, gapBonus: 0, shieldChance: 0 };
+    return skills.mods;
+  }
+
   // ─── Preload Employee Images ─────────────────────────────────────────────────
   (function preloadImages() {
     for (const emp of EMPLOYEES) {
@@ -294,6 +407,7 @@
   let bobPhase;
   let deadErrorMsg;
   let goldShimmer, goldShimmerTimer;
+  let neuralDodgeTimer;
 
   // ─── Background init ─────────────────────────────────────────────────────────
   function initBg() {
@@ -358,6 +472,7 @@
     bobPhase = 0;
     goldShimmer = false;
     goldShimmerTimer = 0;
+    neuralDodgeTimer = 0;
     deadErrorMsg = ERRORS[Math.floor(Math.random() * ERRORS.length)];
     initBg();
   }
@@ -390,7 +505,7 @@
 
   function flap() {
     if (state !== STATE.PLAYING) return;
-    player.vy = FLAP_FORCE;
+    player.vy = FLAP_FORCE * getMods().flapMul;
     sfxFlap();
     spawnInkSplatter();
   }
@@ -536,7 +651,8 @@
 
   // ─── Pipe Spawning ──────────────────────────────────────────────────────────
   function spawnPipe() {
-    const gap = Math.max(GAP_MIN, GAP_BASE - score * 1.5);
+    const gapBonus = getMods().gapBonus;
+    const gap = Math.max(GAP_MIN + gapBonus, GAP_BASE + gapBonus - score * 1.5);
     const topH = TOP_BAR_H + 30 + Math.random() * (BASE_H - GROUND_H - TOP_BAR_H - gap - 60);
     const label = LABELS[Math.floor(Math.random() * LABELS.length)];
     pipes.push({
@@ -545,6 +661,7 @@
       botY: topH + gap,
       botH: BASE_H - GROUND_H - (topH + gap),
       scored: false,
+      dodged: false,
       label,
       phase: Math.random() * Math.PI * 2,
     });
@@ -624,6 +741,25 @@
     }
   }
 
+  // ─── Neural Dodge Particles ───────────────────────────────────────────────────
+  function spawnNeuralDodgeParticles() {
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 40 + Math.random() * 100;
+      particles.push({
+        x:     player.x + (Math.random() - 0.5) * 16,
+        y:     player.y + (Math.random() - 0.5) * 16,
+        vx:    Math.cos(angle) * speed,
+        vy:    Math.sin(angle) * speed - 30,
+        life:  1.0,
+        decay: 1.2 + Math.random() * 0.6,
+        r:     1.5 + Math.random() * 2.5,
+        type:  'neural',
+        color: ['#00BCF2', '#7df5ff', '#ffffff', '#FF6F00'][Math.floor(Math.random() * 4)],
+      });
+    }
+  }
+
   // ─── Shake ───────────────────────────────────────────────────────────────────
   function startShake(amt, dur) {
     shakeAmt = amt;
@@ -657,6 +793,7 @@
 
     if (flashTimer > 0) flashTimer -= dt;
     if (goldShimmerTimer > 0) goldShimmerTimer -= dt;
+    if (neuralDodgeTimer > 0) neuralDodgeTimer -= dt;
     if (shakeTmr < shakeDur) shakeTmr += dt;
 
     sandOffset = (sandOffset + gameSpeed * dt * 0.3) % 24;
@@ -696,7 +833,9 @@
   }
 
   function updatePlaying(dt) {
-    player.vy += GRAVITY * dt;
+    const mods = getMods();
+
+    player.vy += GRAVITY * mods.gravityMul * dt;
     player.y  += player.vy * dt;
 
     if (player.vy < -80) spawnFrameTrail();
@@ -714,7 +853,7 @@
       if (!p.scored && p.x + PIPE_WIDTH < player.x - player.r) {
         p.scored = true;
         score++;
-        gameSpeed = BASE_SPEED + score * SPEED_RAMP;
+        gameSpeed = BASE_SPEED + score * SPEED_RAMP * mods.speedMul;
         sfxScore();
 
         if (score % 10 === 0) {
@@ -753,8 +892,15 @@
       const px = p.x, pw = PIPE_WIDTH;
       if (player.x + player.r > px && player.x - player.r < px + pw) {
         if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
-          die();
-          return;
+          if (!p.dodged && mods.shieldChance > 0 && Math.random() < mods.shieldChance) {
+            p.dodged = true;
+            neuralDodgeTimer = 0.6;
+            showFlash('🤖 Neural Dodge!', 1.2);
+            spawnNeuralDodgeParticles();
+          } else if (!p.dodged) {
+            die();
+            return;
+          }
         }
       }
     }
@@ -1037,6 +1183,16 @@
     const y = player.y + bob;
 
     ctx.save();
+
+    // Neural dodge phase-through effect
+    if (neuralDodgeTimer > 0) {
+      const phaseAlpha = 0.35 + 0.35 * Math.sin(neuralDodgeTimer * 30);
+      ctx.globalAlpha = phaseAlpha;
+      // Cyan glow during phase
+      ctx.shadowColor = '#00BCF2';
+      ctx.shadowBlur = 22;
+    }
+
     const tilt = player.dead
       ? Math.PI / 2
       : Math.max(-0.45, Math.min(0.75, player.vy / 520));
@@ -1316,9 +1472,10 @@
     ctx.fillStyle = C.dim;
     ctx.fillText(`Best: ${hiScore}`, 10, TOP_BAR_H + 36);
 
-    // Consultant name + HUD photo
+    // Consultant name + HUD photo + passive
     if (selectedEmployee) {
       const emp = selectedEmployee;
+      const skillDef = getEmployeeSkills();
       const hudPhotoR = 16;
       const hudPhotoX = 10 + hudPhotoR;
       const hudPhotoY = TOP_BAR_H + 50 + hudPhotoR - 8;
@@ -1346,12 +1503,28 @@
         ctx.globalAlpha = 0.75;
         ctx.fillText(`Consultant: ${emp.name}`, 10 + hudPhotoR * 2 + 4, TOP_BAR_H + 50);
         ctx.globalAlpha = 1;
+
+        if (skillDef) {
+          ctx.font = '7.5px Georgia, serif';
+          ctx.fillStyle = C.dim;
+          ctx.globalAlpha = 0.65;
+          ctx.fillText(`${skillDef.icon} ${skillDef.passive.split(' — ')[0]}`, 10 + hudPhotoR * 2 + 4, TOP_BAR_H + 62);
+          ctx.globalAlpha = 1;
+        }
       } else {
         ctx.font = '9px Georgia, serif';
         ctx.fillStyle = emp.color;
         ctx.globalAlpha = 0.75;
         ctx.fillText(`Consultant: ${emp.name}`, 10, TOP_BAR_H + 50);
         ctx.globalAlpha = 1;
+
+        if (skillDef) {
+          ctx.font = '7.5px Georgia, serif';
+          ctx.fillStyle = C.dim;
+          ctx.globalAlpha = 0.65;
+          ctx.fillText(`${skillDef.icon} ${skillDef.passive.split(' — ')[0]}`, 10, TOP_BAR_H + 62);
+          ctx.globalAlpha = 1;
+        }
       }
     }
   }
@@ -1520,6 +1693,12 @@
     // Scroll indicators
     drawScrollIndicators();
 
+    // Skill panel for hovered/focused card
+    const previewIdx = selectHoverIdx >= 0 ? selectHoverIdx : selectFocusIdx;
+    if (previewIdx >= 0 && previewIdx < EMPLOYEES.length) {
+      drawSkillPanel(EMPLOYEES[previewIdx]);
+    }
+
     ctx.textAlign = 'left';
   }
 
@@ -1660,6 +1839,99 @@
     }
   }
 
+  // ─── Skill Panel (Select Screen) ─────────────────────────────────────────────
+  function drawSkillBar(x, y, w, h, value, maxValue, color) {
+    // Background track
+    ctx.fillStyle = 'rgba(60,40,60,0.5)';
+    roundRect(x, y, w, h, h / 2);
+    ctx.fill();
+
+    // Fill
+    const fillW = Math.max(0, (value / maxValue) * w);
+    if (fillW > 0) {
+      ctx.save();
+      ctx.beginPath();
+      roundRect(x, y, fillW, h, h / 2);
+      ctx.clip();
+      const barGrad = ctx.createLinearGradient(x, 0, x + w, 0);
+      barGrad.addColorStop(0, color);
+      barGrad.addColorStop(1, lightenColor(color, 30));
+      ctx.fillStyle = barGrad;
+      ctx.fillRect(x, y, fillW, h);
+      ctx.restore();
+    }
+  }
+
+  function drawSkillPanel(emp) {
+    const skillDef = ROLE_SKILLS[emp.role];
+    if (!skillDef) return;
+
+    const panelY = GRID_AREA_BOTTOM + 4;
+    const panelH = BASE_H - GROUND_H - panelY - 2;
+    if (panelH < 16) return;
+
+    const panelX = 8;
+    const panelW = BASE_W - 16;
+    const cx = panelX + panelW / 2;
+
+    // Panel background
+    ctx.fillStyle = 'rgba(14,8,18,0.85)';
+    roundRect(panelX, panelY, panelW, panelH, 5);
+    ctx.fill();
+
+    ctx.strokeStyle = emp.color;
+    ctx.lineWidth = 0.8;
+    ctx.globalAlpha = 0.4;
+    roundRect(panelX, panelY, panelW, panelH, 5);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Role icon + title
+    ctx.textAlign = 'left';
+    const textY = panelY + 13;
+    ctx.font = 'bold 9px Georgia, serif';
+    ctx.fillStyle = emp.color;
+    ctx.fillText(`${skillDef.icon} ${skillDef.title}`, panelX + 8, textY);
+
+    // Skill bars — arranged horizontally
+    const skills = skillDef.skills;
+    const skillNames = Object.keys(skills);
+    const barW = 52;
+    const barH = 4;
+    const barGap = 28;
+    let bx = panelX + 8;
+    const barY = panelY + 20;
+
+    const skillLabelColors = { agility: '#7df5a0', resilience: '#7db8f5', velocity: '#f5d07d' };
+    for (const name of skillNames) {
+      const val = skills[name];
+      ctx.font = '6.5px Georgia, serif';
+      ctx.fillStyle = C.dim;
+      ctx.globalAlpha = 0.8;
+      ctx.fillText(name.charAt(0).toUpperCase() + name.slice(1), bx, barY);
+      ctx.globalAlpha = 1;
+
+      drawSkillBar(bx, barY + 3, barW, barH, val, 10, skillLabelColors[name] || emp.color);
+
+      ctx.font = '6px monospace';
+      ctx.fillStyle = C.dim;
+      ctx.globalAlpha = 0.7;
+      ctx.fillText(`${val}/10`, bx + barW + 3, barY + barH + 3);
+      ctx.globalAlpha = 1;
+
+      bx += barW + barGap;
+    }
+
+    // Passive description
+    ctx.font = '7px Georgia, serif';
+    ctx.fillStyle = C.mauve;
+    ctx.globalAlpha = 0.75;
+    ctx.textAlign = 'right';
+    ctx.fillText(skillDef.passive, panelX + panelW - 8, textY);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+  }
+
   // ─── Death Screen ─────────────────────────────────────────────────────────────
   function drawDead() {
     // Dark overlay with slight burgundy tint
@@ -1741,12 +2013,62 @@
     ctx.stroke();
     ctx.globalAlpha = 1;
 
+    // Role skill bars on death screen
+    if (selectedEmployee) {
+      const skillDef = ROLE_SKILLS[selectedEmployee.role];
+      if (skillDef) {
+        const skillY = cy + 42;
+
+        // Role icon + title
+        ctx.font = 'bold 9px Georgia, serif';
+        ctx.fillStyle = selectedEmployee.color;
+        ctx.fillText(`${skillDef.icon} ${skillDef.title}`, cx, skillY);
+
+        const skills = skillDef.skills;
+        const skillNames = Object.keys(skills);
+        const barW = 60;
+        const barH = 5;
+        const totalBarsW = skillNames.length * barW + (skillNames.length - 1) * 20;
+        let sbx = cx - totalBarsW / 2;
+        const sbY = skillY + 6;
+        const skillLabelColors = { agility: '#7df5a0', resilience: '#7db8f5', velocity: '#f5d07d' };
+
+        for (const name of skillNames) {
+          const val = skills[name];
+
+          ctx.font = '6.5px Georgia, serif';
+          ctx.fillStyle = C.dim;
+          ctx.globalAlpha = 0.8;
+          ctx.textAlign = 'left';
+          ctx.fillText(name.charAt(0).toUpperCase() + name.slice(1), sbx, sbY);
+          ctx.globalAlpha = 1;
+
+          drawSkillBar(sbx, sbY + 3, barW, barH, val, 10, skillLabelColors[name] || selectedEmployee.color);
+
+          ctx.font = '6px monospace';
+          ctx.fillStyle = C.dim;
+          ctx.globalAlpha = 0.6;
+          ctx.fillText(`${val}`, sbx + barW + 3, sbY + barH + 3);
+          ctx.globalAlpha = 1;
+
+          sbx += barW + 20;
+        }
+
+        ctx.font = '7px Georgia, serif';
+        ctx.fillStyle = C.mauve;
+        ctx.globalAlpha = 0.65;
+        ctx.textAlign = 'center';
+        ctx.fillText(skillDef.passive, cx, sbY + barH + 16);
+        ctx.globalAlpha = 1;
+      }
+    }
+
     // Sprint metrics
     ctx.font = 'bold 12px Georgia, serif';
     ctx.fillStyle = C.soft_white;
-    ctx.fillText(`Sprints Delivered:  ${score}`, cx, cy + 48);
+    ctx.fillText(`Sprints Delivered:  ${score}`, cx, cy + 98);
     ctx.fillStyle = C.gold;
-    ctx.fillText(`Personal Best:      ${hiScore}`, cx, cy + 66);
+    ctx.fillText(`Personal Best:      ${hiScore}`, cx, cy + 116);
 
     // New record
     if (score >= hiScore && score > 0) {
@@ -1754,7 +2076,7 @@
       ctx.fillStyle = C.gold;
       ctx.shadowColor = C.gold;
       ctx.shadowBlur = 8;
-      ctx.fillText('✦ New Personal Best ✦', cx, cy + 88);
+      ctx.fillText('✦ New Personal Best ✦', cx, cy + 134);
       ctx.shadowBlur = 0;
     }
 
@@ -1765,14 +2087,14 @@
     ctx.fillStyle = C.cream;
     ctx.shadowColor = C.mauve;
     ctx.shadowBlur = 8;
-    ctx.fillText('— Return to Stillness —', cx, cy + 120);
+    ctx.fillText('— Return to Stillness —', cx, cy + 158);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 
     ctx.font = '9px Georgia, serif';
     ctx.fillStyle = C.dim;
     ctx.globalAlpha = 0.6;
-    ctx.fillText('press Space or tap to continue', cx, cy + 138);
+    ctx.fillText('press Space or tap to continue', cx, cy + 174);
     ctx.globalAlpha = 1;
 
     ctx.textAlign = 'left';
