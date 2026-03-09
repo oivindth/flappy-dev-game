@@ -67,36 +67,50 @@
 
   // ─── Employee Data ──────────────────────────────────────────────────────────
   const EMPLOYEES = [
-    { name: 'Anatoliy',  role: 'Senior Dev',       tech: 'C# · React',          color: '#4EC9B0' },
-    { name: 'Bent',      role: 'DevOps',            tech: 'C# · Azure',          color: '#569CD6' },
-    { name: 'Christian', role: 'Senior Dev',        tech: 'Go · React',          color: '#00ADD8' },
-    { name: 'Eivind',    role: 'Senior Dev',        tech: 'Rust · Python',       color: '#DEA584' },
-    { name: 'Erlend',    role: 'Architect',         tech: 'C# · DevOps',         color: '#68217A' },
-    { name: 'Espen',     role: 'Developer',         tech: 'C# · Azure',          color: '#0078D4' },
-    { name: 'Evgeny',    role: 'Cloud Architect',   tech: 'Azure MVP',           color: '#00BCF2' },
-    { name: 'Frederik',  role: 'Fullstack Dev',     tech: 'FP · Design',         color: '#E8A0B0' },
-    { name: 'Gareth',    role: 'Senior Dev',        tech: 'C# · Security',       color: '#C586C0' },
-    { name: 'Ingrid',    role: 'Senior Dev',        tech: 'Python · React',      color: '#3776AB' },
-    { name: 'Louise',    role: 'Senior Dev',        tech: 'C# · .NET',           color: '#512BD4' },
-    { name: 'Magnus T.', role: 'Senior Dev',        tech: 'C# · React',          color: '#61DAFB' },
-    { name: 'Magnus W.', role: 'Developer',         tech: 'Java · Go',           color: '#B07219' },
-    { name: 'Misha',     role: 'Senior Dev',        tech: '.NET · DevSecOps',    color: '#E44D26' },
-    { name: 'Nicolai',   role: 'Senior Dev',        tech: 'C# · React',          color: '#764ABC' },
-    { name: 'Oddbjørn',  role: 'Senior Dev',        tech: 'C# · Mobile',         color: '#3DDC84' },
-    { name: 'Snorre',    role: 'CTO/Architect',     tech: 'C# · React',          color: '#F7DF1E' },
-    { name: 'Steinar',   role: 'Cloud Architect',   tech: 'C# · F# · Azure',    color: '#378BBA' },
-    { name: 'Steve',     role: 'Senior Dev',        tech: 'Java · Angular',      color: '#DD0031' },
-    { name: 'Thomas',    role: 'Senior Dev',        tech: '.NET · Angular',      color: '#1572B6' },
-    { name: 'Torbjørn',  role: 'AI Consultant',     tech: 'AI · Fullstack',      color: '#FF6F00' },
-    { name: 'Torstein',  role: 'Tech Lead',         tech: '.NET · Go · Azure',   color: '#00ACD7' },
-    { name: 'Trude',     role: 'Frontend Dev',      tech: 'A11y · React',        color: '#F06292' },
-    { name: 'Øivind',    role: 'Senior Dev',        tech: 'C# · React · Azure',  color: '#FF9800' },
-    { name: 'Johannes',  role: 'Architect',         tech: 'Enterprise Arch',     color: '#607D8B' },
-    { name: 'Arlene',    role: 'Senior Advisor',    tech: 'Project Mgmt',        color: '#9C27B0' },
-    { name: 'Håvard',    role: 'CEO',               tech: 'Business · BI',       color: '#D4A843' },
-    { name: 'Inge',      role: 'Senior Consultant', tech: 'Agile · Scrum',       color: '#4CAF50' },
-    { name: 'Mia',       role: 'COO',               tech: 'Sales · HR',          color: '#E91E63' },
+    { name: 'Anatoliy',  role: 'Senior Dev',       tech: 'C# · React',          color: '#4EC9B0', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/68245fcecf6f7d7ee3a7408a_Anatoliy%202.avif' },
+    { name: 'Bent',      role: 'DevOps',            tech: 'C# · Azure',          color: '#569CD6', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/63316926d786bb51ccefda05_Skjermbilde%202022-09-26%20kl.%2010.55.45.avif' },
+    { name: 'Christian', role: 'Senior Dev',        tech: 'Go · React',          color: '#00ADD8', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/682461a0ad768cc05b0d5a87_Christian%202.avif' },
+    { name: 'Eivind',    role: 'Senior Dev',        tech: 'Rust · Python',       color: '#DEA584', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/6479d6f1f1c9776fc400eb71_eivindgamst_ENSO_eivindgamst-2_web.avif' },
+    { name: 'Erlend',    role: 'Architect',         tech: 'C# · DevOps',         color: '#68217A', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568864f20c6908841bb0cd_DSC01201-WEB.avif' },
+    { name: 'Espen',     role: 'Developer',         tech: 'C# · Azure',          color: '#0078D4', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/6256889346c69e5f12c08a5c_DSC00854-WEB.avif' },
+    { name: 'Evgeny',    role: 'Cloud Architect',   tech: 'Azure MVP',           color: '#00BCF2', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/625688e9cbde99e0724a9d01_DSC09604-WEB.avif' },
+    { name: 'Frederik',  role: 'Fullstack Dev',     tech: 'FP · Design',         color: '#E8A0B0', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568ccfd03fb750723909d8_DSC01511-Edit-WEB.avif' },
+    { name: 'Gareth',    role: 'Senior Dev',        tech: 'C# · Security',       color: '#C586C0', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/625689ee4e10c9362a941eeb_DSC00604-WEB.avif' },
+    { name: 'Ingrid',    role: 'Senior Dev',        tech: 'Python · React',      color: '#3776AB', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/64d1fdb94d7142429b8f5e6f_IngridSkar_ENSO_Portrett__WEB_02.avif' },
+    { name: 'Louise',    role: 'Senior Dev',        tech: 'C# · .NET',           color: '#512BD4', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/64554fe2f620e21f484f4fd7_DSC00314-WEB%20%E2%80%93%20fokus_edited.avif' },
+    { name: 'Magnus T.', role: 'Senior Dev',        tech: 'C# · React',          color: '#61DAFB', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568a1f17359a78f1ab1b90_DSC09765-WEB.avif' },
+    { name: 'Magnus W.', role: 'Developer',         tech: 'Java · Go',           color: '#B07219', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568a7357589a314905a337_DSC08710-WEB.avif' },
+    { name: 'Misha',     role: 'Senior Dev',        tech: '.NET · DevSecOps',    color: '#E44D26', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/6830923534438e3894f95a9d_DSC02646.avif' },
+    { name: 'Nicolai',   role: 'Senior Dev',        tech: 'C# · React',          color: '#764ABC', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568ac054a4df68af1954b5_DSC00756-WEB.avif' },
+    { name: 'Oddbjørn',  role: 'Senior Dev',        tech: 'C# · Mobile',         color: '#3DDC84', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568b0ff992c678d99f84e0_DSC09132-WEB.avif' },
+    { name: 'Snorre',    role: 'CTO/Architect',     tech: 'C# · React',          color: '#F7DF1E', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568bcbbdde46a0611a84c2_DSC01686-WEB.avif' },
+    { name: 'Steinar',   role: 'Cloud Architect',   tech: 'C# · F# · Azure',    color: '#378BBA', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/630cb381a133e4c90b6c3196_DSC09674-WEB.avif' },
+    { name: 'Steve',     role: 'Senior Dev',        tech: 'Java · Angular',      color: '#DD0031', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/682465877f4c9eec4c9c9448_Steve%202.avif' },
+    { name: 'Thomas',    role: 'Senior Dev',        tech: '.NET · Angular',      color: '#1572B6', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/64caa0adc397cf708dbce85e_portrett_ENSO_thomaslangseth-2_web.avif' },
+    { name: 'Torbjørn',  role: 'AI Consultant',     tech: 'AI · Fullstack',      color: '#FF6F00', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/665d8f0bfcbdf56b4f85a6de_ENSO_TORBJ%C3%98RN2%20web%202%20ny.avif' },
+    { name: 'Torstein',  role: 'Tech Lead',         tech: '.NET · Go · Azure',   color: '#00ACD7', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568d524e10c9ce8f943f11_DSC00031-WEB.avif' },
+    { name: 'Trude',     role: 'Frontend Dev',      tech: 'A11y · React',        color: '#F06292', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/62568dab822b077dac957f32_DSC08647-WEB.avif' },
+    { name: 'Øivind',    role: 'Senior Dev',        tech: 'C# · React · Azure',  color: '#FF9800', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/63465d59c67091592bf1b7b4_DSC01377-WEB.avif' },
+    { name: 'Johannes',  role: 'Architect',         tech: 'Enterprise Arch',     color: '#607D8B', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/625689cbe553ab1731ce61cb_DSC00242-WEB.avif' },
+    { name: 'Arlene',    role: 'Senior Advisor',    tech: 'Project Mgmt',        color: '#9C27B0', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/625687f78c1752a63287864a_DSC09477-WEB.avif' },
+    { name: 'Håvard',    role: 'CEO',               tech: 'Business · BI',       color: '#D4A843', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/683092b889d97d6250281234_DSC02807%20(2).avif' },
+    { name: 'Inge',      role: 'Senior Consultant', tech: 'Agile · Scrum',       color: '#4CAF50', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/630cae97ded60123f98e4dda_INGE_enso_WEB-6.avif' },
+    { name: 'Mia',       role: 'COO',               tech: 'Sales · HR',          color: '#E91E63', img: 'https://cdn.prod.website-files.com/6214cf7582a16f2e3af3bcb1/68245e9a0746ecb86e5b1a9e_Mia%202.avif' },
   ];
+
+  // ─── Preload Employee Images ─────────────────────────────────────────────────
+  (function preloadImages() {
+    for (const emp of EMPLOYEES) {
+      if (!emp.img) continue;
+      const el = new Image();
+      el.crossOrigin = 'anonymous';
+      el.onload  = () => { emp.imgEl = el; emp.imgLoaded = true; };
+      el.onerror = () => { emp.imgLoaded = false; };
+      el.src = emp.img;
+      emp.imgEl = el;
+      emp.imgLoaded = false;
+    }
+  })();
 
   // ─── Audio ──────────────────────────────────────────────────────────────────
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -182,7 +196,7 @@
 
   // ─── Character Select State ──────────────────────────────────────────────────
   const CARD_W      = 100;
-  const CARD_H      = 90;
+  const CARD_H      = 110;
   const CARD_COLS   = 4;
   const CARD_GAP_X  = 10;
   const CARD_GAP_Y  = 10;
@@ -1016,7 +1030,7 @@
     ctx.textAlign = 'left';
   }
 
-  // ─── Player: Ensō Circle ──────────────────────────────────────────────────────
+  // ─── Player: Ensō Circle / Photo ─────────────────────────────────────────────
   function drawPlayer() {
     const x = player.x;
     const bob = player.dead ? 0 : Math.sin(bobPhase) * 2.5;
@@ -1030,17 +1044,41 @@
     ctx.rotate(tilt);
 
     const r = player.r;
+    const color = getPlayerColor();
+    const emp = selectedEmployee;
 
-    // Outer glow
-    if (!player.dead) {
-      ctx.shadowColor = getPlayerColor();
-      ctx.shadowBlur = 18;
+    if (emp && emp.imgLoaded && emp.imgEl) {
+      // Outer glow
+      if (!player.dead) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 18;
+      }
+
+      // Ensō ring as border
+      drawEnsoCircle(0, 0, r + 3, player.dead, color);
+      ctx.shadowBlur = 0;
+
+      // Circular photo crop
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.clip();
+      if (player.dead) {
+        ctx.filter = 'grayscale(80%) brightness(0.5)';
+      }
+      ctx.drawImage(emp.imgEl, -r, -r, r * 2, r * 2);
+      ctx.filter = 'none';
+      ctx.restore();
+    } else {
+      // Fallback: original ensō
+      if (!player.dead) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 18;
+      }
+      drawEnsoCircle(0, 0, r, player.dead, color);
+      ctx.shadowBlur = 0;
     }
 
-    // Draw ensō — brushstroke arc that doesn't quite close
-    drawEnsoCircle(0, 0, r, player.dead, getPlayerColor());
-
-    ctx.shadowBlur = 0;
     ctx.restore();
   }
 
@@ -1278,13 +1316,43 @@
     ctx.fillStyle = C.dim;
     ctx.fillText(`Best: ${hiScore}`, 10, TOP_BAR_H + 36);
 
-    // Consultant name
+    // Consultant name + HUD photo
     if (selectedEmployee) {
-      ctx.font = '9px Georgia, serif';
-      ctx.fillStyle = selectedEmployee.color;
-      ctx.globalAlpha = 0.75;
-      ctx.fillText(`Consultant: ${selectedEmployee.name}`, 10, TOP_BAR_H + 50);
-      ctx.globalAlpha = 1;
+      const emp = selectedEmployee;
+      const hudPhotoR = 16;
+      const hudPhotoX = 10 + hudPhotoR;
+      const hudPhotoY = TOP_BAR_H + 50 + hudPhotoR - 8;
+
+      if (emp.imgLoaded && emp.imgEl) {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.arc(hudPhotoX, hudPhotoY, hudPhotoR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(emp.imgEl, hudPhotoX - hudPhotoR, hudPhotoY - hudPhotoR, hudPhotoR * 2, hudPhotoR * 2);
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = emp.color;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.65;
+        ctx.beginPath();
+        ctx.arc(hudPhotoX, hudPhotoY, hudPhotoR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.font = '9px Georgia, serif';
+        ctx.fillStyle = emp.color;
+        ctx.globalAlpha = 0.75;
+        ctx.fillText(`Consultant: ${emp.name}`, 10 + hudPhotoR * 2 + 4, TOP_BAR_H + 50);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.font = '9px Georgia, serif';
+        ctx.fillStyle = emp.color;
+        ctx.globalAlpha = 0.75;
+        ctx.fillText(`Consultant: ${emp.name}`, 10, TOP_BAR_H + 50);
+        ctx.globalAlpha = 1;
+      }
     }
   }
 
@@ -1501,38 +1569,62 @@
       ctx.globalAlpha = 1;
     }
 
-    // Mini ensō circle
-    const ensoR = 12;
-    const ensoX = x + w / 2;
-    const ensoY = y + 20;
+    // Photo / ensō preview
+    const photoR = 36;
+    const photoX = x + w / 2;
+    const photoY = y + photoR + 8;
 
-    ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = isActive ? 10 : 5;
-    drawEnsoCircle(ensoX, ensoY, ensoR, false, color);
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    if (emp.imgLoaded && emp.imgEl) {
+      ctx.save();
+      // Clipping circle for photo
+      ctx.beginPath();
+      ctx.arc(photoX, photoY, photoR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(emp.imgEl, photoX - photoR, photoY - photoR, photoR * 2, photoR * 2);
+      ctx.restore();
+
+      // Color border ring
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = isActive ? 10 : 4;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isActive ? 2 : 1.2;
+      ctx.globalAlpha = isActive ? 1.0 : 0.6;
+      ctx.beginPath();
+      ctx.arc(photoX, photoY, photoR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    } else {
+      const ensoR = 12;
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = isActive ? 10 : 5;
+      drawEnsoCircle(photoX, photoY, ensoR, false, color);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
 
     // Name
     ctx.font = `bold 8px Georgia, serif`;
     ctx.fillStyle = C.cream;
     ctx.textAlign = 'center';
     ctx.globalAlpha = isActive ? 1.0 : 0.88;
-    ctx.fillText(emp.name, x + w / 2, ensoY + ensoR + 12);
+    ctx.fillText(emp.name, x + w / 2, photoY + photoR + 10);
     ctx.globalAlpha = 1;
 
     // Role
     ctx.font = '7px Georgia, serif';
     ctx.fillStyle = color;
     ctx.globalAlpha = isActive ? 0.9 : 0.65;
-    ctx.fillText(emp.role, x + w / 2, ensoY + ensoR + 23);
+    ctx.fillText(emp.role, x + w / 2, photoY + photoR + 21);
     ctx.globalAlpha = 1;
 
     // Tech
     ctx.font = '6.5px Georgia, serif';
     ctx.fillStyle = C.dim;
     ctx.globalAlpha = isActive ? 0.8 : 0.5;
-    ctx.fillText(emp.tech, x + w / 2, ensoY + ensoR + 34);
+    ctx.fillText(emp.tech, x + w / 2, photoY + photoR + 32);
     ctx.globalAlpha = 1;
 
     ctx.textAlign = 'left';
@@ -1579,7 +1671,7 @@
 
     ctx.textAlign = 'center';
 
-    // Broken ensō — large, incomplete, in player color
+    // Broken ensō / photo — large, in player color, desaturated
     ctx.save();
     ctx.translate(cx, cy - 88);
     ctx.shadowColor = getPlayerColor();
@@ -1587,6 +1679,27 @@
     drawEnsoCircle(0, 0, 42, true, getPlayerColor());
     ctx.shadowBlur = 0;
     ctx.restore();
+
+    if (selectedEmployee && selectedEmployee.imgLoaded && selectedEmployee.imgEl) {
+      const deathPhotoR = 30;
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.filter = 'grayscale(70%) brightness(0.55)';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 88, deathPhotoR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(selectedEmployee.imgEl, cx - deathPhotoR, cy - 88 - deathPhotoR, deathPhotoR * 2, deathPhotoR * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = selectedEmployee.color;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.arc(cx, cy - 88, deathPhotoR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // "Sprint Retrospective" header — personalised if character selected
     const retroTitle = selectedEmployee
