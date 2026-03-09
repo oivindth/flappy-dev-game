@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Flappy Dev — Deploy or Die</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1e1e1e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+  #gameCanvas {
+    display: block;
+    cursor: pointer;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+(function() {
+  'use strict';
+
+  // ─── Canvas Setup ───────────────────────────────────────────────────────────
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const BASE_W = 480;
+  const BASE_H = 640;
+
+  let scale = 1;
+
+  function resize() {
+    const wRatio = window.innerWidth / BASE_W;
+    const hRatio = window.innerHeight / BASE_H;
+    scale = Math.min(wRatio, hRatio);
+    canvas.width = BASE_W * scale;
+    canvas.height = BASE_H * scale;
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ─── Colours ────────────────────────────────────────────────────────────────
+  const C = {
+    bg:       '#1e1e1e',
+    blue:     '#569cd6',
+    teal:     '#4ec9b0',
+    orange:   '#ce9178',
+    yellow:   '#dcdcaa',
+    green:    '#608b4e',
+    purple:   '#c586c0',
+    red:      '#f44747',
+    obs:      '#252526',
+    obsAccent:'#0e639c',
+    ground:   '#333333',
+    comment:  '#6a9955',
+    string:   '#ce9178',
+    keyword:  '#569cd6',
+    white:    '#d4d4d4',
+    dimWhite: '#888888',
+  };
+
+  // ─── Audio ──────────────────────────────────────────────────────────────────
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ac = null;
+
+  function initAudio() {
+    if (!ac) ac = new AudioCtx();
+  }
+
+  function playTone(freq, type, duration, gainVal, startDelay = 0) {
+    if (!ac) return;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ac.currentTime + startDelay);
+    gain.gain.setValueAtTime(gainVal, ac.currentTime + startDelay);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + startDelay + duration);
+    osc.start(ac.currentTime + startDelay);
+    osc.stop(ac.currentTime + startDelay + duration + 0.01);
+  }
+
+  function sfxFlap() {
+    initAudio();
+    playTone(600, 'sine', 0.06, 0.15);
+    playTone(900, 'sine', 0.04, 0.08, 0.02);
+  }
+
+  function sfxScore() {
+    initAudio();
+    playTone(880, 'sine', 0.08, 0.2);
+    playTone(1100, 'sine', 0.08, 0.2, 0.08);
+  }
+
+  function sfxDie() {
+    initAudio();
+    playTone(200, 'sawtooth', 0.3, 0.3);
+    playTone(150, 'sawtooth', 0.4, 0.25, 0.1);
+    playTone(100, 'sawtooth', 0.5, 0.2, 0.2);
+  }
+
+  // ─── State Machine ──────────────────────────────────────────────────────────
+  const STATE = { MENU: 'menu', PLAYING: 'playing', DEAD: 'dead' };
+  let state = STATE.MENU;
+
+  // ─── Constants ──────────────────────────────────────────────────────────────
+  const GRAVITY        = 1400;    // px/s²
+  const FLAP_FORCE     = -420;    // px/s  (negative = up)
+  const BASE_SPEED     = 160;     // px/s
+  const PIPE_WIDTH     = 60;
+  const GAP_BASE       = 155;
+  const GAP_MIN        = 105;
+  const GROUND_H       = 40;
+  const TOP_BAR_H      = 30;
+  const PIPE_SPAWN_X   = BASE_W + 20;
+  const PIPE_INTERVAL  = 1.7;     // seconds between pipes
+  const SPEED_RAMP     = 8;       // px/s gained per pipe passed
+
+  // ─── Obstacle Labels ────────────────────────────────────────────────────────
+  const LABELS = [
+    'FIREWALL', 'PROD SERVER', 'MERGE CONFLICT', 'CODE REVIEW',
+    'LEGACY CODE', 'TECHNICAL DEBT', 'DEPENDENCY HELL', 'RACE CONDITION',
+    'NULL POINTER', 'MEMORY LEAK', 'INFINITE LOOP', 'DEADLOCK',
+    'CORS ERROR', 'HEISENBUG', 'SCOPE CREEP', 'BIKESHEDDING',
+  ];
+
+  // ─── Game Over Messages ─────────────────────────────────────────────────────
+  const ERRORS = [
+    '500 Internal Server Error',
+    'Segmentation Fault (core dumped)',
+    'Stack Overflow',
+    'FATAL: merge conflict in production',
+    "ERROR: Cannot read property 'fly' of undefined",
+    'kernel panic - not syncing',
+    'BSOD: IRQL_NOT_LESS_OR_EQUAL',
+    'npm ERR! ERESOLVE could not resolve',
+    'git push --force (wrong branch)',
+    'rm -rf / (oops)',
+  ];
+
+  // ─── Background Code Lines ──────────────────────────────────────────────────
+  const CODE_LINES = [
+    '  const deploy = async () => {',
+    '    await pushToProduction();',
+    '  // TODO: fix before deploy',
+    '    if (bug) throw new Error();',
+    '  function handlePanic() {',
+    '    return undefined; // ???',
+    '  git commit -m "fix"',
+    '  git commit -m "fix2"',
+    '  // This should not happen',
+    '  npm install --save chaos',
+    '  export default spaghetti;',
+    '  const x = x; // works ig',
+    '  catch (e) { /* pray */ }',
+    '  sudo rm -rf node_modules',
+    '  while(true) { ship(); }',
+    '  // do not touch this code',
+    '  if (Date.now() > deadline)',
+    '    hackItTogetherAndShip();',
+    '  return null; // maybe fix?',
+    '  console.log("why????");',
+  ];
+
+  // ─── Trail Characters ───────────────────────────────────────────────────────
+  const TRAIL_CHARS = ['{', '}', ';', '//', '()', '=>', '[]', '0', '1', '&&', '||', '!=', '=='];
+
+  // ─── Game Objects ───────────────────────────────────────────────────────────
+  let player, pipes, particles, trailParticles, bgLines, matrixDrops;
+  let score, hiScore, pipeTimer, gameSpeed, flashMsg, flashTimer;
+  let shakeAmt, shakeDur, shakeTmr;
+  let wingPhase, bobPhase;
+  let deadErrorMsg;
+
+  function getHiScore() {
+    return parseInt(localStorage.getItem('flappydev_hi') || '0', 10);
+  }
+  function setHiScore(v) {
+    localStorage.setItem('flappydev_hi', String(v));
+  }
+
+  // ─── Initialise / Reset ─────────────────────────────────────────────────────
+  function initBg() {
+    bgLines = [];
+    const lineH = 14;
+    const rows = Math.ceil(BASE_H / lineH) + 2;
+    for (let i = 0; i < rows; i++) {
+      bgLines.push({
+        text: CODE_LINES[i % CODE_LINES.length],
+        x: 0,
+        y: TOP_BAR_H + i * lineH,
+        speed: 18 + Math.random() * 8,
+        alpha: 0.045 + Math.random() * 0.035,
+      });
+    }
+
+    matrixDrops = [];
+    for (let i = 0; i < 20; i++) {
+      matrixDrops.push({
+        x: Math.random() * BASE_W,
+        y: Math.random() * BASE_H,
+        speed: 40 + Math.random() * 60,
+        char: TRAIL_CHARS[Math.floor(Math.random() * TRAIL_CHARS.length)],
+        alpha: 0.03 + Math.random() * 0.04,
+      });
+    }
+  }
+
+  function resetGame() {
+    player = {
+      x: 90,
+      y: BASE_H / 2,
+      vy: 0,
+      r: 14,       // collision radius
+      dead: false,
+    };
+    pipes = [];
+    particles = [];
+    trailParticles = [];
+    score = 0;
+    hiScore = getHiScore();
+    pipeTimer = PIPE_INTERVAL * 0.5;
+    gameSpeed = BASE_SPEED;
+    flashMsg = '';
+    flashTimer = 0;
+    shakeAmt = 0;
+    shakeDur = 0;
+    shakeTmr = 0;
+    wingPhase = 0;
+    bobPhase = 0;
+    deadErrorMsg = ERRORS[Math.floor(Math.random() * ERRORS.length)];
+    initBg();
+  }
+
+  resetGame();
+
+  // ─── Input ──────────────────────────────────────────────────────────────────
+  function handleInput() {
+    if (state === STATE.MENU) {
+      initAudio();
+      state = STATE.PLAYING;
+      resetGame();
+      flap();
+    } else if (state === STATE.PLAYING) {
+      flap();
+    } else if (state === STATE.DEAD) {
+      state = STATE.MENU;
+    }
+  }
+
+  function flap() {
+    if (state !== STATE.PLAYING) return;
+    player.vy = FLAP_FORCE;
+    wingPhase = 0;
+    sfxFlap();
+    spawnTrail();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      handleInput();
+    }
+  });
+  canvas.addEventListener('click', handleInput);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); handleInput(); }, { passive: false });
+
+  // ─── Pipe Spawning ──────────────────────────────────────────────────────────
+  function spawnPipe() {
+    const gap = Math.max(GAP_MIN, GAP_BASE - score * 1.5);
+    const topH = TOP_BAR_H + 30 + Math.random() * (BASE_H - GROUND_H - TOP_BAR_H - gap - 60);
+    const label = LABELS[Math.floor(Math.random() * LABELS.length)];
+    pipes.push({
+      x: PIPE_SPAWN_X,
+      topH,
+      botY: topH + gap,
+      botH: BASE_H - GROUND_H - (topH + gap),
+      scored: false,
+      label,
+      ledPhase: Math.random() * Math.PI * 2,
+    });
+  }
+
+  // ─── Trail Particles ─────────────────────────────────────────────────────────
+  function spawnTrail() {
+    for (let i = 0; i < 3; i++) {
+      trailParticles.push({
+        x: player.x - player.r,
+        y: player.y + (Math.random() - 0.5) * 12,
+        vx: -60 - Math.random() * 60,
+        vy: (Math.random() - 0.5) * 40,
+        char: TRAIL_CHARS[Math.floor(Math.random() * TRAIL_CHARS.length)],
+        life: 1.0,
+        decay: 0.8 + Math.random() * 0.6,
+        size: 8 + Math.random() * 4,
+        color: [C.blue, C.teal, C.yellow, C.orange][Math.floor(Math.random() * 4)],
+      });
+    }
+  }
+
+  // ─── Collision Particles ─────────────────────────────────────────────────────
+  function spawnExplosion(x, y) {
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 80 + Math.random() * 200;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        char: TRAIL_CHARS[Math.floor(Math.random() * TRAIL_CHARS.length)],
+        life: 1.0,
+        decay: 0.6 + Math.random() * 0.8,
+        size: 9 + Math.random() * 8,
+        color: [C.red, C.orange, C.yellow, C.teal][Math.floor(Math.random() * 4)],
+      });
+    }
+  }
+
+  // ─── Shake ───────────────────────────────────────────────────────────────────
+  function startShake(amt, dur) {
+    shakeAmt = amt;
+    shakeDur = dur;
+    shakeTmr = 0;
+  }
+
+  // ─── Flash Message ───────────────────────────────────────────────────────────
+  function showFlash(msg, duration) {
+    flashMsg = msg;
+    flashTimer = duration;
+  }
+
+  // ─── Update ──────────────────────────────────────────────────────────────────
+  let lastTime = 0;
+
+  function update(ts) {
+    const dt = Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+
+    // background always updates
+    updateBg(dt);
+
+    if (state === STATE.PLAYING) {
+      updatePlaying(dt);
+    } else if (state === STATE.DEAD) {
+      updateDead(dt);
+    }
+
+    // particles update in all states after death
+    updateParticles(dt);
+    updateTrail(dt);
+
+    if (flashTimer > 0) flashTimer -= dt;
+    if (shakeTmr < shakeDur) shakeTmr += dt;
+
+    render();
+    requestAnimationFrame(update);
+  }
+
+  function updateBg(dt) {
+    for (const l of bgLines) {
+      l.x -= l.speed * dt;
+      if (l.x + BASE_W < 0) l.x = 0;
+    }
+    for (const d of matrixDrops) {
+      d.y += d.speed * dt;
+      if (d.y > BASE_H - GROUND_H) {
+        d.y = TOP_BAR_H;
+        d.x = Math.random() * BASE_W;
+        d.char = TRAIL_CHARS[Math.floor(Math.random() * TRAIL_CHARS.length)];
+      }
+    }
+    wingPhase += dt * 8;
+    bobPhase  += dt * 3;
+  }
+
+  function updatePlaying(dt) {
+    // Physics
+    player.vy += GRAVITY * dt;
+    player.y  += player.vy * dt;
+
+    // Trail every frame when moving fast up
+    if (player.vy < -100 && Math.random() < 0.3) spawnTrail();
+
+    // Pipe spawning
+    pipeTimer -= dt;
+    if (pipeTimer <= 0) {
+      spawnPipe();
+      pipeTimer = PIPE_INTERVAL;
+    }
+
+    // Move pipes
+    for (const p of pipes) {
+      p.x -= gameSpeed * dt;
+      p.ledPhase += dt * 2;
+
+      // Score
+      if (!p.scored && p.x + PIPE_WIDTH < player.x - player.r) {
+        p.scored = true;
+        score++;
+        gameSpeed = BASE_SPEED + score * SPEED_RAMP;
+        sfxScore();
+
+        if (score % 10 === 0) {
+          showFlash('🚀 Deployed to Production!', 2.0);
+        } else if (score % 5 === 0) {
+          showFlash('✓ Build Passing', 1.5);
+        }
+
+        if (score > hiScore) {
+          hiScore = score;
+          setHiScore(hiScore);
+        }
+      }
+    }
+
+    // Remove off-screen pipes
+    pipes = pipes.filter(p => p.x + PIPE_WIDTH > -10);
+
+    // Collision: ceiling
+    if (player.y - player.r < TOP_BAR_H) {
+      player.y = TOP_BAR_H + player.r;
+      die();
+      return;
+    }
+
+    // Collision: floor
+    if (player.y + player.r > BASE_H - GROUND_H) {
+      player.y = BASE_H - GROUND_H - player.r;
+      die();
+      return;
+    }
+
+    // Collision: pipes
+    for (const p of pipes) {
+      const px = p.x, pw = PIPE_WIDTH;
+      if (player.x + player.r > px && player.x - player.r < px + pw) {
+        if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
+          die();
+          return;
+        }
+      }
+    }
+  }
+
+  function die() {
+    state = STATE.DEAD;
+    player.dead = true;
+    spawnExplosion(player.x, player.y);
+    startShake(8, 0.4);
+    sfxDie();
+    deadErrorMsg = ERRORS[Math.floor(Math.random() * ERRORS.length)];
+  }
+
+  function updateDead(dt) {
+    player.vy += GRAVITY * dt;
+    player.y  += player.vy * dt;
+    if (player.y + player.r > BASE_H - GROUND_H) {
+      player.y = BASE_H - GROUND_H - player.r;
+      player.vy = 0;
+    }
+  }
+
+  function updateParticles(dt) {
+    for (const p of particles) {
+      p.x    += p.vx * dt;
+      p.y    += p.vy * dt;
+      p.vy   += 600 * dt;
+      p.life -= p.decay * dt;
+    }
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  function updateTrail(dt) {
+    for (const t of trailParticles) {
+      t.x    += t.vx * dt;
+      t.y    += t.vy * dt;
+      t.life -= t.decay * dt;
+    }
+    trailParticles = trailParticles.filter(t => t.life > 0);
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
+  function render() {
+    const shakeX = shakeTmr < shakeDur
+      ? (Math.random() - 0.5) * shakeAmt * 2 * (1 - shakeTmr / shakeDur)
+      : 0;
+    const shakeY = shakeTmr < shakeDur
+      ? (Math.random() - 0.5) * shakeAmt * (1 - shakeTmr / shakeDur)
+      : 0;
+
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+
+    drawBg();
+    drawBgCode();
+    drawMatrixDrops();
+
+    if (state !== STATE.MENU) {
+      drawPipes();
+      drawTrail();
+      drawPlayer();
+      drawParticles();
+    }
+
+    drawGround();
+    drawTopBar();
+    drawHUD();
+
+    if (flashTimer > 0) drawFlash();
+
+    if (state === STATE.MENU) drawMenu();
+    if (state === STATE.DEAD) drawDead();
+
+    ctx.restore();
+  }
+
+  function drawBg() {
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+  }
+
+  function drawBgCode() {
+    ctx.font = '11px Consolas, monospace';
+    for (const l of bgLines) {
+      ctx.globalAlpha = l.alpha;
+      // syntax-colour each line simply by position
+      ctx.fillStyle = l.text.trim().startsWith('//') ? C.comment :
+                      l.text.includes('git ')       ? C.orange  :
+                      l.text.includes('npm ')        ? C.red     :
+                      l.text.includes('const ')      ? C.blue    :
+                      l.text.includes('function ')   ? C.yellow  :
+                      l.text.includes('return ')     ? C.keyword :
+                      C.white;
+      ctx.fillText(l.text, l.x, l.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMatrixDrops() {
+    ctx.font = '10px Consolas, monospace';
+    for (const d of matrixDrops) {
+      ctx.globalAlpha = d.alpha;
+      ctx.fillStyle = C.teal;
+      ctx.fillText(d.char, d.x, d.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Pipes ────────────────────────────────────────────────────────────────────
+  function drawPipes() {
+    for (const p of pipes) {
+      drawPipe(p);
+    }
+  }
+
+  function drawPipe(p) {
+    const x = p.x, w = PIPE_WIDTH;
+
+    // Top pipe (server rack downward)
+    drawServerRack(x, TOP_BAR_H, w, p.topH - TOP_BAR_H, true, p.ledPhase);
+
+    // Bottom pipe (server rack upward)
+    drawServerRack(x, p.botY, w, p.botH, false, p.ledPhase + 1);
+
+    // Label between pipes
+    ctx.save();
+    ctx.font = 'bold 7px Consolas, monospace';
+    ctx.fillStyle = C.red;
+    ctx.globalAlpha = 0.85;
+    ctx.textAlign = 'center';
+    const labelY = p.topH + (p.botY - p.topH) / 2 + 3;
+    // Rotate label text 90 degrees for narrow space
+    ctx.translate(x + w / 2, labelY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(p.label, 0, 0);
+    ctx.restore();
+    ctx.textAlign = 'left';
+  }
+
+  function drawServerRack(x, y, w, h, top, ledPhase) {
+    if (h <= 0) return;
+
+    // Base colour
+    ctx.fillStyle = '#252526';
+    ctx.fillRect(x, y, w, h);
+
+    // Border
+    ctx.strokeStyle = C.obsAccent;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
+
+    // Rack units (horizontal lines)
+    ctx.strokeStyle = '#3a3a3a';
+    ctx.lineWidth = 1;
+    const unitH = 10;
+    for (let ry = (top ? y + h - unitH : y); top ? ry >= y : ry < y + h; top ? ry -= unitH : ry += unitH) {
+      ctx.beginPath();
+      ctx.moveTo(x + 2, ry);
+      ctx.lineTo(x + w - 2, ry);
+      ctx.stroke();
+
+      // LED indicator
+      const ledOn = Math.sin(ledPhase + ry * 0.1) > 0.3;
+      ctx.fillStyle = ledOn ? '#00ff41' : '#004010';
+      ctx.fillRect(x + w - 10, ry + 3, 4, 4);
+
+      // Second LED (blue, activity)
+      const led2 = Math.sin(ledPhase * 1.7 + ry * 0.2) > 0.5;
+      ctx.fillStyle = led2 ? C.blue : '#001530';
+      ctx.fillRect(x + w - 18, ry + 3, 4, 4);
+    }
+
+    // Ethernet ports at bottom (top pipe) or top (bottom pipe)
+    const portY = top ? y + h - 12 : y + 2;
+    ctx.fillStyle = '#1a1a1a';
+    for (let i = 0; i < 3; i++) {
+      ctx.fillRect(x + 4 + i * 14, portY, 10, 8);
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x + 4 + i * 14, portY, 10, 8);
+    }
+
+    // Dangling cable from top pipe
+    if (top && h > 20) {
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y + h);
+      ctx.bezierCurveTo(
+        x + 10, y + h + 15,
+        x + 20, y + h + 25,
+        x + 12, y + h + 20
+      );
+      ctx.stroke();
+    }
+
+    // Curly brace accent
+    ctx.font = 'bold 16px Consolas, monospace';
+    ctx.fillStyle = C.obsAccent;
+    ctx.globalAlpha = 0.6;
+    ctx.fillText(top ? '}' : '{', x + w / 2 - 5, top ? y + h - 2 : y + 14);
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Player (Bug) ─────────────────────────────────────────────────────────────
+  function drawPlayer() {
+    const x = player.x;
+    const bob = Math.sin(bobPhase) * 2;
+    const y = player.y + (player.dead ? 0 : bob);
+    const wingFlap = Math.sin(wingPhase * 2) * 0.8;
+
+    ctx.save();
+    // Tilt based on velocity
+    const tilt = player.dead ? Math.PI / 2 :
+                 Math.max(-0.5, Math.min(0.8, player.vy / 500));
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+
+    // Glow
+    if (!player.dead) {
+      ctx.shadowColor = C.teal;
+      ctx.shadowBlur = 10;
+    }
+
+    // Wings
+    const wingColor = C.yellow;
+    // Left wing (top)
+    ctx.save();
+    ctx.translate(-4, -4);
+    ctx.rotate(-0.4 + wingFlap);
+    ctx.fillStyle = wingColor;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.ellipse(-8, 0, 12, 5, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Right wing (bottom)
+    ctx.save();
+    ctx.translate(-4, 4);
+    ctx.rotate(0.4 - wingFlap);
+    ctx.fillStyle = wingColor;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.ellipse(-8, 0, 12, 5, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Body (caterpillar segments)
+    const segments = [
+      { dx: 8, dy: 0, r: 9 },
+      { dx: 0, dy: 0, r: 10 },
+      { dx: -8, dy: 1, r: 8 },
+      { dx: -16, dy: 2, r: 7 },
+    ];
+
+    for (const seg of segments) {
+      ctx.beginPath();
+      ctx.arc(seg.dx, seg.dy, seg.r, 0, Math.PI * 2);
+      ctx.fillStyle = C.teal;
+      ctx.fill();
+      ctx.strokeStyle = '#2a8a78';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(10, -3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1e1e1e';
+    ctx.beginPath();
+    ctx.arc(11, -3, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Specular on eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(12, -4, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Antenna
+    ctx.strokeStyle = C.yellow;
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(10, -10);
+    ctx.lineTo(14, -20);
+    ctx.stroke();
+    ctx.fillStyle = C.yellow;
+    ctx.beginPath();
+    ctx.arc(14, -21, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ─── Trail ───────────────────────────────────────────────────────────────────
+  function drawTrail() {
+    ctx.font = '9px Consolas, monospace';
+    for (const t of trailParticles) {
+      ctx.globalAlpha = t.life * 0.7;
+      ctx.fillStyle = t.color;
+      ctx.fillText(t.char, t.x, t.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Particles ───────────────────────────────────────────────────────────────
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.font = `${p.size}px Consolas, monospace`;
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.char, p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Ground ───────────────────────────────────────────────────────────────────
+  function drawGround() {
+    const y = BASE_H - GROUND_H;
+
+    // Ground fill
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, y, BASE_W, GROUND_H);
+
+    // Top border
+    ctx.strokeStyle = C.obsAccent;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(BASE_W, y);
+    ctx.stroke();
+
+    // Terminal prompt
+    ctx.font = '12px Consolas, monospace';
+    ctx.fillStyle = C.green;
+    ctx.fillText('flappy-dev', 8, y + 16);
+    ctx.fillStyle = C.blue;
+    ctx.fillText(' git:(main)', 88, y + 16);
+    ctx.fillStyle = C.yellow;
+    ctx.fillText('✗', 170, y + 16);
+    ctx.fillStyle = C.white;
+
+    // Blinking cursor
+    const blink = Math.floor(Date.now() / 500) % 2 === 0;
+    if (blink) {
+      ctx.fillStyle = C.white;
+      ctx.fillRect(185, y + 5, 8, 14);
+    }
+
+    // Right side: status
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillStyle = C.dimWhite;
+    ctx.textAlign = 'right';
+    ctx.fillText('node v20.0.0  UTF-8', BASE_W - 6, y + 16);
+    ctx.textAlign = 'left';
+  }
+
+  // ─── Top Bar (IDE tabs) ───────────────────────────────────────────────────────
+  function drawTopBar() {
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(0, 0, BASE_W, TOP_BAR_H);
+
+    ctx.strokeStyle = '#3c3c3c';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, TOP_BAR_H);
+    ctx.lineTo(BASE_W, TOP_BAR_H);
+    ctx.stroke();
+
+    // Tabs
+    const tabs = [
+      { label: 'main.js', active: true,  modified: true  },
+      { label: 'index.ts', active: false, modified: false },
+      { label: 'hell.js',  active: false, modified: true  },
+    ];
+    let tx = 0;
+    for (const tab of tabs) {
+      const tw = 90;
+      ctx.fillStyle = tab.active ? '#1e1e1e' : '#2d2d2d';
+      ctx.fillRect(tx, 0, tw, TOP_BAR_H);
+      if (!tab.active) {
+        ctx.strokeStyle = '#3c3c3c';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tx, 0, tw, TOP_BAR_H);
+      }
+      ctx.font = '11px Consolas, monospace';
+      ctx.fillStyle = tab.active ? C.white : C.dimWhite;
+      ctx.fillText((tab.modified ? '● ' : '') + tab.label, tx + 8, 19);
+      tx += tw;
+    }
+  }
+
+  // ─── HUD ──────────────────────────────────────────────────────────────────────
+  function drawHUD() {
+    if (state === STATE.MENU) return;
+
+    // Score — commits
+    ctx.font = 'bold 18px Consolas, monospace';
+    ctx.fillStyle = C.green;
+    ctx.shadowColor = C.green;
+    ctx.shadowBlur = 6;
+    ctx.fillText(`⎇ Commits: ${score}`, 10, TOP_BAR_H + 24);
+    ctx.shadowBlur = 0;
+
+    // Hi score
+    ctx.font = '12px Consolas, monospace';
+    ctx.fillStyle = C.dimWhite;
+    ctx.fillText(`Best Deploy: ${hiScore}`, 10, TOP_BAR_H + 40);
+  }
+
+  // ─── Flash Messages ───────────────────────────────────────────────────────────
+  function drawFlash() {
+    if (flashTimer <= 0) return;
+    const alpha = Math.min(1, flashTimer * 2);
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 16px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = C.green;
+    ctx.shadowColor = C.green;
+    ctx.shadowBlur = 12;
+    ctx.fillText(flashMsg, BASE_W / 2, TOP_BAR_H + 70);
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'left';
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Menu Screen ─────────────────────────────────────────────────────────────
+  function drawMenu() {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(30,30,30,0.75)';
+    ctx.fillRect(0, TOP_BAR_H, BASE_W, BASE_H - TOP_BAR_H - GROUND_H);
+
+    const cx = BASE_W / 2;
+    const cy = BASE_H / 2;
+
+    // Title glow
+    ctx.textAlign = 'center';
+
+    ctx.font = 'bold 42px Consolas, monospace';
+    ctx.shadowColor = C.teal;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = C.teal;
+    ctx.fillText('FLAPPY DEV', cx, cy - 80);
+    ctx.shadowBlur = 0;
+
+    ctx.font = 'bold 13px Consolas, monospace';
+    ctx.fillStyle = C.yellow;
+    ctx.fillText('— Deploy or Die —', cx, cy - 55);
+
+    // Decorative box
+    const bx = cx - 150, by = cy - 40, bw = 300, bh = 130;
+    ctx.strokeStyle = C.obsAccent;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = 'rgba(14,99,156,0.08)';
+    ctx.fillRect(bx, by, bw, bh);
+
+    ctx.font = '11px Consolas, monospace';
+    const lines = [
+      { text: '// Navigate the production environment', color: C.comment },
+      { text: '// Avoid firewalls and legacy code', color: C.comment },
+      { text: '', color: '' },
+      { text: 'const start = () => {', color: C.blue },
+      { text: '  press(SPACE) || tap(screen);', color: C.white },
+      { text: '};', color: C.blue },
+    ];
+    let ly = by + 18;
+    for (const l of lines) {
+      if (l.text) {
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, cx, ly);
+      }
+      ly += 16;
+    }
+
+    // Start prompt
+    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 400);
+    ctx.globalAlpha = pulse;
+    ctx.font = 'bold 14px Consolas, monospace';
+    ctx.fillStyle = C.green;
+    ctx.shadowColor = C.green;
+    ctx.shadowBlur = 8;
+    ctx.fillText('$ ./start.sh', cx, cy + 115);
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+
+    // Hi score
+    const hi = getHiScore();
+    if (hi > 0) {
+      ctx.font = '12px Consolas, monospace';
+      ctx.fillStyle = C.dimWhite;
+      ctx.fillText(`Best Sprint: ${hi} commits`, cx, cy + 140);
+    }
+
+    ctx.textAlign = 'left';
+  }
+
+  // ─── Game Over Screen ─────────────────────────────────────────────────────────
+  function drawDead() {
+    // Overlay
+    ctx.fillStyle = 'rgba(20,0,0,0.80)';
+    ctx.fillRect(0, TOP_BAR_H, BASE_W, BASE_H - TOP_BAR_H - GROUND_H);
+
+    const cx = BASE_W / 2;
+    const cy = BASE_H / 2 - 10;
+
+    ctx.textAlign = 'center';
+
+    // Error header
+    ctx.font = 'bold 15px Consolas, monospace';
+    ctx.fillStyle = C.red;
+    ctx.shadowColor = C.red;
+    ctx.shadowBlur = 12;
+    ctx.fillText('[ PROCESS TERMINATED ]', cx, cy - 90);
+    ctx.shadowBlur = 0;
+
+    // Error message box
+    const bx = cx - 165, by = cy - 80, bw = 330, bh = 56;
+    ctx.fillStyle = 'rgba(244,71,71,0.1)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = C.red;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillStyle = C.red;
+    const errLines = wrapText(deadErrorMsg, 42);
+    for (let i = 0; i < errLines.length; i++) {
+      ctx.fillText(errLines[i], cx, by + 18 + i * 15);
+    }
+
+    // Stats
+    ctx.font = 'bold 13px Consolas, monospace';
+    ctx.fillStyle = C.white;
+    ctx.fillText('Total Commits:  ' + score, cx, cy + 5);
+    ctx.fillStyle = C.yellow;
+    ctx.fillText('Best Sprint:    ' + hiScore, cx, cy + 25);
+
+    // New record
+    if (score > hiScore && score > 0) {
+      ctx.font = 'bold 12px Consolas, monospace';
+      ctx.fillStyle = C.green;
+      ctx.shadowColor = C.green;
+      ctx.shadowBlur = 8;
+      ctx.fillText('★ NEW PERSONAL BEST! ★', cx, cy + 48);
+      ctx.shadowBlur = 0;
+    }
+
+    // Restart button
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 350);
+    ctx.globalAlpha = pulse;
+    ctx.font = 'bold 15px Consolas, monospace';
+    ctx.fillStyle = C.green;
+    ctx.shadowColor = C.green;
+    ctx.shadowBlur = 8;
+    ctx.fillText('$ npm run restart', cx, cy + 100);
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillStyle = C.dimWhite;
+    ctx.fillText('(press SPACE / tap to retry)', cx, cy + 118);
+
+    ctx.textAlign = 'left';
+  }
+
+  function wrapText(text, maxChars) {
+    const words = text.split(' ');
+    const lines = [];
+    let current = '';
+    for (const word of words) {
+      if ((current + ' ' + word).trim().length > maxChars) {
+        lines.push(current.trim());
+        current = word;
+      } else {
+        current = (current + ' ' + word).trim();
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  }
+
+  // ─── Start ───────────────────────────────────────────────────────────────────
+  requestAnimationFrame(ts => {
+    lastTime = ts;
+    requestAnimationFrame(update);
+  });
+
+})();
+</script>
+</body>
+</html>
